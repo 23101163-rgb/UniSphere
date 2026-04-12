@@ -1,10 +1,97 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}{{ material.title }}{% endblock %}
+
+{% block content %}
+<div class="col-md-8">
+    <div class="card p-4 shadow-sm">
+        <h3>{{ material.title }}</h3>
+
+        <p class="text-muted">
+            {{ material.course_name }} | {{ material.get_semester_display }} | {{ material.topic }}
+        </p>
+
+        <p>{{ material.description }}</p>
+
+        <p class="small text-muted">
+            Uploaded by {{ material.uploaded_by.get_full_name|default:material.uploaded_by.username }}
+            on {{ material.created_at|date:"d M Y" }}
+        </p>
+
+        <p>
+            ★ {{ material.average_rating }}/5
+            ({{ material.ratings.count }} ratings)
+            | {{ material.download_count }} downloads
+        </p>
+
+        {% if material.tags %}
+            <p>
+                <strong>Tags:</strong>
+                {% for tag in material.tag_list %}
+                    <span class="badge bg-light text-dark border">{{ tag }}</span>
+                {% endfor %}
+            </p>
+        {% endif %}
+
+        <div class="mt-3">
+            <a href="{% url 'materials:download' material.pk %}" class="btn btn-success">
+                <i class="bi bi-download"></i> Download
+            </a>
+
+            {% if material.uploaded_by == request.user or request.user.is_admin_user %}
+                <a href="{% url 'materials:edit' material.pk %}" class="btn btn-outline-primary">
+                    Edit
+                </a>
+                <a href="{% url 'materials:delete' material.pk %}" class="btn btn-outline-danger">
+                    Delete
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card p-4 mt-3 shadow-sm">
+        <h5>Rate this Material</h5>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} mt-2">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+
+            {% for field in form %}
+                <div class="mb-3">
+                    <label class="form-label">{{ field.label }}</label>
+                    {{ field }}
+
+                    {% for error in field.errors %}
+                        <div class="text-danger small mt-1">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+
+            <button type="submit" class="btn btn-primary btn-sm">Submit Rating</button>
+        </form>
+    </div>
+
+    <div class="card p-4 mt-3 shadow-sm">
+        <h5>Reviews</h5>
+
+        {% for r in material.ratings.all %}
+            <div class="border-bottom pb-2 mb-2">
+                <strong>{{ r.user.get_full_name|default:r.user.username }}</strong>
+                <span class="text-warning">★ {{ r.score }}</span>
+
+                {% if r.review %}
+                    <p class="mb-0 small">{{ r.review }}</p>
+                {% endif %}
+            </div>
+        {% empty %}
+            <p class="text-muted mb-0">No reviews yet.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

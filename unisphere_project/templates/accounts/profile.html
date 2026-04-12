@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Profile{% endblock %}
+
+{% block content %}
+<div class="col-md-8">
+    <div class="card p-4">
+        <div class="d-flex align-items-center mb-3">
+            {% if profile_user.profile_picture %}
+                <img src="{{ profile_user.profile_picture.url }}"
+                     alt="Profile Picture"
+                     class="rounded-circle me-3"
+                     style="width:80px; height:80px; object-fit:cover;">
+            {% else %}
+                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3"
+                     style="width:80px;height:80px;font-size:2rem;">
+                    {{ profile_user.first_name.0 }}{{ profile_user.last_name.0 }}
+                </div>
+            {% endif %}
+
+            <div>
+                <h3 class="mb-0">{{ profile_user.get_full_name }}</h3>
+                <span class="badge bg-primary">{{ profile_user.get_role_display }}</span>
+                <p class="text-muted mb-0">
+                    {{ profile_user.university_id }}
+                    {% if profile_user.department %} | {{ profile_user.department }}{% endif %}
+                </p>
+            </div>
+        </div>
+
+        <hr>
+
+        {% if profile_user.bio %}
+            <p><strong>Bio:</strong> {{ profile_user.bio }}</p>
+        {% endif %}
+
+        {% if profile_user.research_interests %}
+            <p><strong>Research Interests:</strong> {{ profile_user.research_interests }}</p>
+        {% endif %}
+
+        {% if profile_user.expertise %}
+            <p><strong>Expertise:</strong> {{ profile_user.expertise }}</p>
+        {% endif %}
+
+        {% if profile_user.company %}
+            <p><strong>Company:</strong> {{ profile_user.company }}</p>
+        {% endif %}
+
+        {% if profile_user.is_mentor_available %}
+            <span class="badge bg-success">Available for Mentorship</span>
+        {% endif %}
+
+        {% if profile_user == request.user %}
+            <a href="{% url 'accounts:profile_edit' %}" class="btn btn-primary mt-3">Edit Profile</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

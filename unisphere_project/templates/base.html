@@ -1,19 +1,392 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}UniSphere{% endblock %}</title>
+    <title>{% block title %}UniLink{% endblock %} | UAP CSE Platform</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        :root {
+        --primary: #25D366;
+        --primary-light: #1ebe5d;
+        --accent: #DCF8C6;
+
+         --bg: #E5F9F0;
+        --card-bg: #ffffff;
+
+       --text-dark: #1f2937;
+       --text-muted: #6b7280;
+
+      --border-soft: rgba(255,255,255,.16);
+
+      --shadow-soft: 0 8px 24px rgba(37, 211, 102, 0.08);
+      --shadow-card: 0 10px 30px rgba(37, 211, 102, 0.12);
+
+      --radius-lg: 18px;
+      --radius-md: 12px;
+}
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+    background:
+        radial-gradient(circle at top right, rgba(37, 211, 102, 0.10), transparent 20%),
+        linear-gradient(180deg, #f7fff9 0%, var(--bg) 100%);
+    color: var(--text-dark);
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(180deg, #128C7E 0%, #25D366 100%);
+            position: sticky;
+            top: 0;
+            box-shadow: 4px 0 24px rgba(0, 0, 0, .08);
+        }
+
+        .sidebar .brand {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #fff;
+            padding: 22px 20px;
+            border-bottom: 1px solid var(--border-soft);
+            letter-spacing: .3px;
+        }
+
+        .sidebar a {
+            color: rgba(255,255,255,.84);
+            text-decoration: none;
+            padding: 11px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-radius: 12px;
+            margin: 4px 10px;
+            transition: all .25s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sidebar a i {
+            width: 18px;
+            font-size: 1rem;
+        }
+
+        .sidebar a::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, rgba(255,255,255,.10), rgba(255,255,255,.02));
+            opacity: 0;
+            transition: opacity .25s ease;
+        }
+
+        .sidebar a:hover,
+        .sidebar a.active {
+            color: #fff;
+            background: rgba(255,255,255,.12);
+            transform: translateX(3px);
+        }
+
+        .sidebar a:hover::before,
+        .sidebar a.active::before {
+            opacity: 1;
+        }
+
+        .sidebar small {
+            display: block;
+            letter-spacing: 1px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
+
+        .content-area {
+            padding: 30px;
+            animation: fadeInUp .45s ease;
+        }
+
+        .card {
+            border: none;
+            background: var(--card-bg);
+            box-shadow: var(--shadow-card);
+            border-radius: 16px;
+            transition: transform .25s ease, box-shadow .25s ease;
+            animation: fadeInUp .45s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 16px 34px rgba(26, 35, 126, 0.12);
+        }
+
+        .badge-role {
+            font-size: .75rem;
+        }
+
+        .stat-card {
+            border-left: 4px solid;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::after {
+            content: "";
+            position: absolute;
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            right: -25px;
+            top: -25px;
+            background: rgba(79,107,255,0.06);
+        }
+
+        .stat-card.blue { border-left-color: #1a237e; }
+        .stat-card.green { border-left-color: #2e7d32; }
+        .stat-card.orange { border-left-color: #ef6c00; }
+        .stat-card.red { border-left-color: #c62828; }
+
+        .form-control,
+        .form-select {
+            border-radius: 12px;
+            border: 1px solid #d8e0ee;
+            padding: 10px 14px;
+            transition: all .2s ease;
+            box-shadow: none;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: #8ea2ff;
+            box-shadow: 0 0 0 0.2rem rgba(79, 107, 255, 0.14);
+        }
+
+        .btn {
+            border-radius: 12px;
+            font-weight: 600;
+            padding: 10px 16px;
+            transition: all .22s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #1ebe5d 0%, #0f6f63 100%);
+        }
+
+        .alert {
+            border: none;
+            border-radius: 14px;
+            box-shadow: var(--shadow-soft);
+            animation: slideFade .35s ease;
+        }
+
+        .table {
+            vertical-align: middle;
+        }
+
+        .table thead th {
+            border-bottom: none;
+            color: var(--text-muted);
+            font-weight: 700;
+            font-size: .86rem;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+        }
+
+        .table tbody tr {
+            border-top: 1px solid #edf1f7;
+            transition: background-color .2s ease;
+        }
+
+        .table tbody tr:hover {
+            background-color: rgba(79, 107, 255, 0.03);
+        }
+
+        .badge {
+            border-radius: 999px;
+            padding: .5em .75em;
+            font-weight: 600;
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+        }
+
+        .public-shell {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding: 30px 0;
+        }
+
+        .public-shell .container {
+            animation: fadeInUp .45s ease;
+        }
+
+        .text-muted {
+            color: var(--text-muted) !important;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideFade {
+            from {
+                opacity: 0;
+                transform: translateY(-8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 991.98px) {
+            .content-area {
+                padding: 20px 16px;
+            }
+
+            .card {
+                border-radius: 14px;
+            }
+        }
+    </style>
 </head>
-<body class="bg-light">
-    <div class="container py-5">
-        {% block content %}
-        <div class="card p-4 shadow-sm">
-            <h1 class="h3 mb-2">UniSphere Starter Project</h1>
-            <p class="text-muted mb-0">Initial clean setup ready for team development.</p>
-        </div>
-        {% endblock %}
+<body>
+{% if user.is_authenticated %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <nav class="col-md-2 d-none d-md-block sidebar p-0">
+            <div class="brand"><i class="bi bi-mortarboard-fill"></i> UniSphere</div>
+            <div class="mt-3">
+                <a href="{% url 'accounts:dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+                <a href="{% url 'materials:list' %}"><i class="bi bi-journal-text"></i> Study Materials</a>
+                <a href="{% url 'thesis:list' %}"><i class="bi bi-file-earmark-text"></i> Thesis Archive</a>
+                <a href="{% url 'thesis:mentors' %}"><i class="bi bi-people"></i> Find Mentors</a>
+                <a href="{% url 'thesis:groups' %}"><i class="bi bi-diagram-3"></i> Research Groups</a>
+                <a href="{% url 'forum:home' %}"><i class="bi bi-chat-dots"></i> Discussion Forum</a>
+                <a href="{% url 'jobs:list' %}"><i class="bi bi-briefcase"></i> Jobs & Internships</a>
+                <a href="{% url 'events:list' %}"><i class="bi bi-calendar-event"></i> Events</a>
+                <a href="{% url 'complaints:submit' %}"><i class="bi bi-exclamation-triangle"></i> Complaints</a>
+                <a href="{% url 'notifications:list' %}"><i class="bi bi-bell"></i> Notifications
+                    {% if unread_count %}<span class="badge bg-danger ms-auto">{{ unread_count }}</span>{% endif %}
+                </a>
+
+                <hr style="border-color: rgba(255,255,255,.2); margin: 10px 20px;">
+
+                <a href="{% url 'accounts:profile' %}"><i class="bi bi-person"></i> My Profile</a>
+                <a href="{% url 'accounts:alumni_directory' %}"><i class="bi bi-person-lines-fill"></i> Alumni Directory</a>
+
+                {% if user.is_teacher or user.is_admin_user %}
+                <hr style="border-color: rgba(255,255,255,.2); margin: 10px 20px;">
+                <small class="text-white-50 px-3">APPROVAL</small>
+
+                <a href="{% url 'materials:pending' %}">
+                    <i class="bi bi-check-circle"></i> Pending Materials
+                </a>
+
+                <a href="{% url 'jobs:pending' %}">
+                    <i class="bi bi-check-circle"></i> Pending Jobs
+                </a>
+                {% endif %}
+
+                {% if user.is_admin_user %}
+                <hr style="border-color: rgba(255,255,255,.2); margin: 10px 20px;">
+                <small class="text-white-50 px-3 mt-2">ADMIN</small>
+
+                <a href="{% url 'accounts:user_management' %}">
+                    <i class="bi bi-gear"></i> Manage Users
+                </a>
+
+                <a href="{% url 'complaints:manage' %}">
+                    <i class="bi bi-clipboard-check"></i> Manage Complaints
+                </a>
+                {% endif %}
+
+                <a href="{% url 'accounts:logout' %}" class="mt-3 text-danger">
+                    <i class="bi bi-box-arrow-left"></i> Logout
+                </a>
+            </div>
+        </nav>
+
+        <!-- Mobile nav -->
+        <nav class="navbar navbar-expand-md d-md-none bg-dark" data-bs-theme="dark">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="{% url 'accounts:dashboard' %}">
+                    <i class="bi bi-mortarboard-fill"></i> UniSphere
+                </a>
+                <button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#mobileNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="mobileNav">
+                    <ul class="navbar-nav">
+                        <li class="nav-item"><a class="nav-link" href="{% url 'accounts:dashboard' %}">Dashboard</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'materials:list' %}">Materials</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'forum:home' %}">Forum</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'jobs:list' %}">Jobs</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'events:list' %}">Events</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'accounts:logout' %}">Logout</a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main content -->
+        <main class="col-md-10 ms-sm-auto content-area">
+            {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% block content %}{% endblock %}
+        </main>
     </div>
+</div>
+{% else %}
+<div class="public-shell">
+    <div class="container">
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show mt-3" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% block content_public %}{% endblock %}
+    </div>
+</div>
+{% endif %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

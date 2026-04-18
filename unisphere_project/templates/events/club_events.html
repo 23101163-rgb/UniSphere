@@ -1,10 +1,93 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}{{ club_label }} Events{% endblock %}
+
+{% block content %}
+<div class="container py-3">
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <h3 class="fw-bold mb-1">
+                <i class="bi bi-people-fill me-2 text-success"></i> {{ club_label }}
+            </h3>
+            <p class="text-muted mb-0">All events organized by this club.</p>
+        </div>
+
+        <a href="{% url 'events:list' %}" class="btn btn-outline-secondary btn-ripple">
+            <i class="bi bi-arrow-left me-1"></i> Back to Events
+        </a>
+    </div>
+
+    <div class="row g-3">
+        {% for event in events %}
+        <div class="col-md-6 col-xl-4">
+            <div class="card p-4 h-100 hover-card">
+
+                <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                    <h5 class="fw-bold mb-0">{{ event.title }}</h5>
+
+                    <span class="badge
+                        {% if event.get_event_status == 'upcoming' %}
+                            bg-primary
+                        {% elif event.get_event_status == 'ongoing' %}
+                            bg-success
+                        {% else %}
+                            bg-secondary
+                        {% endif %}">
+                        {{ event.get_event_status|title }}
+                    </span>
+                </div>
+
+                <div class="mb-3 d-flex flex-wrap gap-2">
+                    <span class="badge bg-info text-dark">{{ event.get_event_type_display }}</span>
+                    <span class="badge bg-light text-dark border">{{ club_label }}</span>
+                </div>
+
+                <p class="text-muted small mb-1">
+                    <i class="bi bi-calendar3 me-1"></i>
+                    {{ event.date }} at {{ event.time|time:"g:i A" }}
+                </p>
+
+                <p class="text-muted small mb-2">
+                    <i class="bi bi-geo-alt me-1"></i>
+                    {{ event.venue }}
+                </p>
+
+                <p class="small mb-3">{{ event.description|truncatewords:18 }}</p>
+
+                <div class="mt-auto d-flex justify-content-between align-items-center">
+                    <small class="text-muted">
+                        <i class="bi bi-people me-1"></i> {{ event.registrations.count }} registered
+                    </small>
+                    <a href="{% url 'events:detail' event.pk %}" class="btn btn-sm btn-outline-primary btn-ripple">
+                        Details
+                    </a>
+                </div>
+
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="card p-5 text-center">
+                <div class="mb-3">
+                    <i class="bi bi-calendar-x text-muted" style="font-size: 2rem;"></i>
+                </div>
+                <h5 class="fw-bold mb-2">No events found for this club.</h5>
+                <p class="text-muted mb-0">This club has not published any events yet.</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+<style>
+.hover-card {
+    transition: all 0.3s ease;
+    border: none;
+}
+.hover-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+}
+</style>
+{% endblock %}

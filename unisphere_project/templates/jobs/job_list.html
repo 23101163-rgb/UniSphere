@@ -1,10 +1,104 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}Jobs & Internships{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <h3 class="fw-bold mb-1">
+            <i class="bi bi-briefcase me-2 text-primary"></i> Jobs & Internships
+        </h3>
+        <p class="text-muted mb-0">Find verified opportunities from alumni, faculty, and admin.</p>
+    </div>
+
+    <a href="{% url 'jobs:create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-1"></i> Post Opportunity
+    </a>
+</div>
+
+<div class="card p-3 p-md-4 mb-4">
+    <form class="row g-2" method="get">
+        <div class="col-md-6">
+            <input type="text" name="q" class="form-control"
+                   placeholder="Search by title, company, or skill"
+                   value="{{ query }}">
+        </div>
+
+        <div class="col-md-3">
+            <select name="type" class="form-select">
+                <option value="">All types</option>
+                <option value="job" {% if job_type == 'job' %}selected{% endif %}>Job</option>
+                <option value="internship" {% if job_type == 'internship' %}selected{% endif %}>Internship</option>
+            </select>
+        </div>
+
+        <div class="col-md-3 d-grid">
+            <button class="btn btn-outline-primary">
+                <i class="bi bi-funnel me-1"></i> Filter
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="row g-3">
+    {% for job in jobs %}
+    <div class="col-md-6 col-xl-4">
+        <div class="card p-4 h-100">
+            <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                <div>
+                    <h5 class="fw-bold mb-1">{{ job.title }}</h5>
+                    <p class="text-muted mb-1">{{ job.company_name }}</p>
+                </div>
+
+                <div class="d-flex flex-column align-items-end gap-1">
+                    <span class="badge bg-dark">{{ job.get_job_type_display }}</span>
+
+                    {% if job.status == "running" %}
+                        <span class="badge bg-success">Running</span>
+                    {% else %}
+                        <span class="badge bg-danger">Ended</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <p class="small text-muted mb-3">
+                <i class="bi bi-calendar-event me-1"></i>
+                Deadline: {{ job.application_deadline }}
+            </p>
+
+            <p class="small mb-3">{{ job.description|truncatewords:20 }}</p>
+
+            <div class="mt-auto d-flex justify-content-between align-items-center gap-2">
+                <a href="{% url 'jobs:detail' job.pk %}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-eye me-1"></i> View
+                </a>
+
+                {% if job.status == "ended" %}
+                    <button class="btn btn-sm btn-outline-secondary" disabled>
+                        Ended
+                    </button>
+                {% else %}
+                    <a href="{% url 'jobs:bookmark' job.pk %}"
+                       class="btn btn-sm {% if job.pk in bookmarked_ids %}btn-outline-danger{% else %}btn-outline-secondary{% endif %}">
+                        {% if job.pk in bookmarked_ids %}
+                            <i class="bi bi-bookmark-check me-1"></i> Saved
+                        {% else %}
+                            <i class="bi bi-bookmark-plus me-1"></i> Save
+                        {% endif %}
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="card p-5 text-center">
+            <div class="mb-3">
+                <i class="bi bi-briefcase text-muted" style="font-size: 2rem;"></i>
+            </div>
+            <h5 class="fw-bold mb-2">No verified jobs found.</h5>
+            <p class="text-muted mb-0">Try changing your search or filter options.</p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

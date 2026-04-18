@@ -1,10 +1,115 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}{{ event.title }}{% endblock %}
+
+{% block content %}
+<div class="card p-4 p-md-5">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+        <div>
+            <h3 class="fw-bold mb-2">{{ event.title }}</h3>
+
+            <div class="d-flex flex-wrap gap-2">
+                <span class="badge bg-info text-dark">
+                    {{ event.get_organizer_category_display }}
+                </span>
+
+                <span class="badge bg-light text-dark border">
+                    {{ event.get_event_type_display }}
+                </span>
+
+                {% if event.organizer_category == 'club' and event.club_name %}
+                    <span class="badge bg-success-subtle text-dark border">
+                        {{ event.get_club_name_display }}
+                    </span>
+                {% endif %}
+
+                <span class="badge
+                    {% if event.get_event_status == 'upcoming' %}
+                        bg-primary
+                    {% elif event.get_event_status == 'ongoing' %}
+                        bg-success
+                    {% else %}
+                        bg-secondary
+                    {% endif %}">
+                    {{ event.get_event_status|title }}
+                </span>
+            </div>
+        </div>
+
+        <div class="text-md-end">
+            <div class="fw-semibold">
+                {{ reg_count }} registration{{ reg_count|pluralize }}
+            </div>
+            <small class="text-muted">
+                Created by {{ event.created_by.get_full_name|default:event.created_by.username }}
+            </small>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm p-4 h-100">
+                <h5 class="fw-bold mb-3">
+                    <i class="bi bi-info-circle me-2 text-primary"></i> About this event
+                </h5>
+                <div class="text-muted">
+                    {{ event.description|linebreaks }}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm p-4 h-100 bg-light-subtle">
+                <h5 class="fw-bold mb-3">Event Overview</h5>
+
+                {% if event.organizer_category == 'club' and event.club_name %}
+                <p class="mb-2">
+                    <strong>Club:</strong> {{ event.get_club_name_display }}
+                </p>
+                {% endif %}
+
+                <p class="mb-2">
+                    <strong>Date:</strong> {{ event.date }}
+                </p>
+
+                <p class="mb-2">
+                    <strong>Time:</strong> {{ event.time|time:"g:i A" }}
+                </p>
+
+                <p class="mb-2">
+                    <strong>Venue:</strong> {{ event.venue }}
+                </p>
+
+                {% if event.registration_link %}
+                <p class="mb-3">
+                    <strong>External registration:</strong><br>
+                    <a href="{{ event.registration_link }}" target="_blank" class="text-decoration-none">
+                        {{ event.registration_link }}
+                    </a>
+                </p>
+                {% endif %}
+
+                <div class="d-grid gap-2 mt-2">
+                    <a href="{% url 'events:register' event.pk %}"
+                       class="btn {% if is_registered %}btn-outline-danger{% else %}btn-primary{% endif %} btn-ripple">
+                        {% if is_registered %}
+                            <i class="bi bi-x-circle me-1"></i> Cancel Registration
+                        {% else %}
+                            <i class="bi bi-check2-circle me-1"></i> Register from UniLink
+                        {% endif %}
+                    </a>
+
+                    {% if request.user == event.created_by or request.user.role == 'teacher' or request.user.role == 'admin' %}
+                    <a href="{% url 'events:participants' event.pk %}" class="btn btn-outline-dark btn-ripple">
+                        <i class="bi bi-people me-1"></i> Participants
+                    </a>
+                    {% endif %}
+
+                    <a href="{% url 'events:list' %}" class="btn btn-outline-secondary btn-ripple">
+                        <i class="bi bi-arrow-left me-1"></i> Back to Events
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,10 +1,70 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}Participants{% endblock %}
+
+{% block content %}
+<div class="page-shell">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold mb-1">Participants</h3>
+            <p class="text-muted mb-0">{{ event.title }}</p>
+        </div>
+
+        <a href="{% url 'events:detail' event.pk %}" class="btn btn-outline-secondary">
+            ← Back
+        </a>
+    </div>
+
+    <div class="card p-4">
+
+        {% if participants %}
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>ID</th>
+                        <th>Email</th>
+                        <th>Department</th>
+                        <th>Club</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for reg in participants %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+
+                        <td>
+                            {{ reg.user.get_full_name|default:reg.user.username }}
+                        </td>
+
+                        <td>{{ reg.user.university_id }}</td>
+
+                        <td>{{ reg.user.email }}</td>
+
+                        <td>{{ reg.user.department }}</td>
+
+                        <td>
+                            {% if reg.user.is_club_member %}
+                                {{ reg.user.get_club_display }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% else %}
+        <div class="text-center text-muted py-4">
+            No participants yet.
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}

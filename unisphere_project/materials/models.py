@@ -29,7 +29,7 @@ class StudyMaterial(models.Model):
     class Meta:
         ordering = ['-created_at']
 
-    def _str_(self):
+    def __str__(self):
         return self.title
 
     def average_rating(self):
@@ -61,7 +61,7 @@ class MaterialRating(models.Model):
         unique_together = ('material', 'user')
         ordering = ['-created_at']
 
-    def _str_(self):
+    def __str__(self):
         return f'{self.user.username} rated {self.material.title} ({self.score})'
 
 
@@ -82,5 +82,5 @@ class Bookmark(models.Model):
         unique_together = ('user', 'material')
         ordering = ['-created_at']
 
-    def _str_(self):
+    def __str__(self):
         return f'{self.user.username} bookmarked {self.material.title}'

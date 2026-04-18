@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}{{ title|default:"Create Event" }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+
+        <div class="card p-4 p-md-5">
+
+            <div class="mb-4">
+                <h3 class="fw-bold">
+                    <i class="bi bi-calendar-plus me-2 text-primary"></i>
+                    {{ title|default:"Create Event" }}
+                </h3>
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+
+                <!-- Title -->
+                <div class="mb-3">
+                    <label class="form-label">Title</label>
+                    {{ form.title }}
+                </div>
+
+                <!-- Description -->
+                <div class="mb-3">
+                    <label class="form-label">Description</label>
+                    {{ form.description }}
+                </div>
+
+                <!-- Organizer -->
+                <div class="mb-3">
+                    <label class="form-label">Organizer Type</label>
+                    {{ form.organizer_category }}
+                </div>
+
+                <!-- Club (Hidden initially) -->
+                <div class="mb-3" id="club-field">
+                    <label class="form-label">Club</label>
+                    {{ form.club_name }}
+                </div>
+
+                <!-- Event Type -->
+                <div class="mb-3">
+                    <label class="form-label">Event Type</label>
+                    {{ form.event_type }}
+                </div>
+
+                <!-- Date -->
+                <div class="mb-3">
+                    <label class="form-label">Date</label>
+                    {{ form.date }}
+                </div>
+
+                <!-- Time -->
+                <div class="mb-3">
+                    <label class="form-label">Time</label>
+                    {{ form.time }}
+                </div>
+
+                <!-- Venue -->
+                <div class="mb-3">
+                    <label class="form-label">Venue</label>
+                    {{ form.venue }}
+                </div>
+
+                <!-- Link -->
+                <div class="mb-3">
+                    <label class="form-label">Registration Link</label>
+                    {{ form.registration_link }}
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100">
+                    Create Event
+                </button>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- JS -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const organizer = document.getElementById("id_organizer_category");
+    const clubField = document.getElementById("club-field");
+
+    function toggleClub() {
+        if (organizer.value === "club") {
+            clubField.style.display = "block";
+        } else {
+            clubField.style.display = "none";
+        }
+    }
+
+    toggleClub();
+    organizer.addEventListener("change", toggleClub);
+});
+</script>
+
+{% endblock %}

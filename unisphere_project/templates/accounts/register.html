@@ -1,65 +1,111 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Sign Up{% endblock %}
 
 {% block content_public %}
-<div class="row justify-content-center align-items-center min-vh-100 py-4">
-    <div class="col-lg-6 col-md-8">
-        <div class="card p-4 p-md-5 border-0">
-            <div class="text-center mb-4">
-                <div class="mb-3">
-                    <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-primary text-white"
-                          style="width: 72px; height: 72px; font-size: 1.8rem; box-shadow: 0 12px 24px rgba(26,35,126,0.18);">
-                        <i class="bi bi-mortarboard-fill"></i>
-                    </span>
-                </div>
-                <h3 class="fw-bold mb-2">Sign Up to UniLink</h3>
-                <p class="text-muted mb-0">Create your university account to access the platform</p>
-            </div>
 
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }} mb-3">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            {% endif %}
-
-            {% if form.non_field_errors %}
-                <div class="alert alert-danger">
-                    {% for error in form.non_field_errors %}
-                        <div>{{ error }}</div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-
-            <form method="post" enctype="multipart/form-data">
-                {% csrf_token %}
-
-                {% for field in form %}
-                <div class="mb-3">
-                    <label class="form-label fw-semibold">{{ field.label }}</label>
-                    {{ field }}
-
-                    {% if field.help_text %}
-                        <small class="text-muted d-block mt-1">{{ field.help_text }}</small>
-                    {% endif %}
-
-                    {% for error in field.errors %}
-                        <div class="text-danger small mt-1">{{ error }}</div>
-                    {% endfor %}
-                </div>
-                {% endfor %}
-
-                <button type="submit" class="btn btn-primary w-100 py-2">
-                    Sign Up
-                </button>
-            </form>
-
-            <p class="text-center mt-4 mb-0">
-                Already have an account?
-                <a href="{% url 'accounts:login' %}" class="fw-semibold text-decoration-none">Sign In</a>
-            </p>
-        </div>
+<div class="text-center mb-4">
+    <div class="mb-3">
+        <img
+            src="{% static 'images/logo.png' %}"
+            alt="UniSphere Logo"
+            style="height:70px; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.15); background:white; padding:8px;"
+        >
     </div>
+    <h3 class="fw-bold mb-2 text-white">Create Account</h3>
+    <p class="text-white-50 mb-0">Join UniSphere platform</p>
 </div>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} mb-3">
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endif %}
+
+{% if form.non_field_errors %}
+    <div class="alert alert-danger">
+        {% for error in form.non_field_errors %}
+            <div>{{ error }}</div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    {% for field in form %}
+        {% if field.name == 'club_name' %}
+            <div class="mb-3 text-start" id="club-name-wrapper">
+        {% elif field.name == 'club_position' %}
+            <div class="mb-3 text-start" id="club-position-wrapper">
+        {% else %}
+            <div class="mb-3 text-start">
+        {% endif %}
+
+        {% if field.name == 'is_club_member' %}
+            <div class="form-check text-white">
+                {{ field }}
+                <label class="form-check-label fw-semibold" for="{{ field.id_for_label }}">
+                    {{ field.label }}
+                </label>
+            </div>
+        {% else %}
+            <label class="form-label fw-semibold text-white" for="{{ field.id_for_label }}">
+                {{ field.label }}
+            </label>
+            {{ field }}
+        {% endif %}
+
+        {% if field.help_text %}
+            <small class="text-white-50 d-block mt-1">{{ field.help_text }}</small>
+        {% endif %}
+
+        {% for error in field.errors %}
+            <div class="text-warning small mt-1">{{ error }}</div>
+        {% endfor %}
+        </div>
+    {% endfor %}
+
+    <button type="submit" class="btn btn-primary w-100 py-2 btn-ripple">
+        Sign Up
+    </button>
+</form>
+
+<p class="text-center mt-4 mb-0 text-white-50">
+    Already have an account?
+    <a href="{% url 'accounts:login' %}" class="fw-semibold text-decoration-none text-white">
+        Sign In
+    </a>
+</p>
+
+<!-- 🔥 JS (UNCHANGED) -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const clubMemberField = document.getElementById("id_is_club_member");
+    const clubNameWrapper = document.getElementById("club-name-wrapper");
+    const clubPositionWrapper = document.getElementById("club-position-wrapper");
+    const clubNameField = document.getElementById("id_club_name");
+    const clubPositionField = document.getElementById("id_club_position");
+
+    function toggleClubFields() {
+        if (!clubMemberField) return;
+
+        if (clubMemberField.checked) {
+            if (clubNameWrapper) clubNameWrapper.style.display = "block";
+            if (clubPositionWrapper) clubPositionWrapper.style.display = "block";
+        } else {
+            if (clubNameWrapper) clubNameWrapper.style.display = "none";
+            if (clubPositionWrapper) clubPositionWrapper.style.display = "none";
+            if (clubNameField) clubNameField.value = "";
+            if (clubPositionField) clubPositionField.value = "";
+        }
+    }
+
+    toggleClubFields();
+    clubMemberField.addEventListener("change", toggleClubFields);
+});
+</script>
+
 {% endblock %}

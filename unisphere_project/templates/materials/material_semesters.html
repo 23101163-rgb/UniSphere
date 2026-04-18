@@ -1,10 +1,46 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}Study Materials{% endblock %}
+
+{% block content %}
+<div class="container py-3">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold">Study Materials</h3>
+            <p class="text-muted mb-0">Browse all materials by semester</p>
+        </div>
+
+        <a href="{% url 'materials:create' %}" class="btn btn-primary">
+            Upload Note
+        </a>
+    </div>
+
+    <div class="row">
+        {% for sem in semester_data %}
+        <div class="col-md-4 mb-3">
+            <a href="{% url 'materials:semester_courses' sem.value %}" class="text-decoration-none">
+                <div class="card p-4 h-100">
+
+                    <h5 class="fw-bold mb-2">{{ sem.label }}</h5>
+
+                    <p class="text-muted small mb-1">Available resources</p>
+                    <h3 class="mb-2">{{ sem.count }}</h3>
+
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                        <small class="text-muted">
+                            <i class="bi bi-journal-text me-1"></i> {{ sem.course_count }} courses
+                        </small>
+
+                        <small class="text-muted">
+                            <i class="bi bi-file-earmark-text me-1"></i> {{ sem.count }} files
+                        </small>
+                    </div>
+
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+{% endblock %}

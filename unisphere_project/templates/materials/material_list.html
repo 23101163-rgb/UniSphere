@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Study Materials{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3><i class="bi bi-journal-text"></i> Study Materials</h3>
+    <a href="{% url 'materials:create' %}" class="btn btn-primary"><i class="bi bi-upload"></i> Upload Material</a>
+</div>
+<form class="row g-2 mb-3" method="get">
+    <div class="col-md-4"><input type="text" name="q" class="form-control" placeholder="Search..." value="{{ query }}"></div>
+    <div class="col-md-3"><select name="semester" class="form-select"><option value="">All Semesters</option>
+        {% for val, label in semesters %}<option value="{{ val }}" {% if val == semester %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select></div>
+    <div class="col-md-3"><input type="text" name="course" class="form-control" placeholder="Course name..." value="{{ course }}"></div>
+    <div class="col-md-2"><button class="btn btn-primary w-100">Filter</button></div>
+</form>
+<div class="row">
+{% for m in materials %}
+<div class="col-md-4 mb-3"><div class="card p-3 h-100">
+    <h5>{{ m.title }}</h5>
+    <p class="text-muted small mb-1">{{ m.course_name }} | {{ m.get_semester_display }}</p>
+    <p class="small">{{ m.description|truncatewords:20 }}</p>
+    <div class="mt-auto">
+        <span class="badge bg-secondary">{{ m.topic }}</span>
+        <span class="text-warning small">★ {{ m.average_rating }}/5</span>
+        <span class="text-muted small">| {{ m.download_count }} downloads</span>
+        <div class="mt-2">
+            <a href="{% url 'materials:detail' m.pk %}" class="btn btn-sm btn-outline-primary">View</a>
+            <a href="{% url 'materials:download' m.pk %}" class="btn btn-sm btn-success"><i class="bi bi-download"></i></a>
+        </div>
+    </div>
+</div></div>
+{% empty %}<p class="text-muted">No materials found.</p>{% endfor %}
+</div>
+{% endblock %}

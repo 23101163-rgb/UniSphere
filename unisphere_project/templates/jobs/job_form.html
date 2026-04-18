@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Post Job{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card p-4 p-md-5">
+            <div class="mb-4">
+                <h3 class="fw-bold mb-2">
+                    <i class="bi bi-briefcase me-2 text-primary"></i> Post a Job or Internship
+                </h3>
+                <p class="text-muted mb-0">
+                    Submitted listings appear instantly for admins, teachers, and alumni.
+                    Student-submitted listings stay pending for approval.
+                </p>
+            </div>
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {% for error in form.non_field_errors %}
+                        <div>{{ error }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="row">
+                    {% for field in form %}
+                    <div class="col-12 {% if field.name == 'title' or field.name == 'company_name' %}col-md-6{% endif %}">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">{{ field.label }}</label>
+                            {{ field }}
+
+                            {% if field.help_text %}
+                                <small class="text-muted d-block mt-1">{{ field.help_text }}</small>
+                            {% endif %}
+
+                            {% for error in field.errors %}
+                                <div class="text-danger small mt-1">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="d-flex flex-wrap gap-2 mt-3">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-send-check me-1"></i> Submit Listing
+                    </button>
+
+                    <a href="{% url 'jobs:list' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i> Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,10 +1,116 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}{{ job.title }}{% endblock %}
+
+{% block content %}
+<div class="card p-4 p-md-5">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+        <div>
+            <h3 class="fw-bold mb-1">{{ job.title }}</h3>
+            <p class="text-muted mb-2">{{ job.company_name }}</p>
+
+            <div class="d-flex flex-wrap gap-2">
+                <span class="badge bg-dark">{{ job.get_job_type_display }}</span>
+
+                {% if job.is_verified %}
+                    <span class="badge bg-success">Verified</span>
+                {% else %}
+                    <span class="badge bg-warning text-dark">Pending Verification</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="text-md-end">
+            <div class="card border-0 shadow-sm px-3 py-2 bg-light">
+                <p class="mb-1"><strong>Deadline:</strong> {{ job.application_deadline }}</p>
+                {% if job.salary_range %}
+                    <p class="mb-0"><strong>Salary:</strong> {{ job.salary_range }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm p-4 h-100">
+                <div class="mb-4">
+                    <h5 class="fw-bold mb-3">
+                        <i class="bi bi-file-text me-2 text-primary"></i>Description
+                    </h5>
+                    <div class="text-muted">
+                        {{ job.description|linebreaks }}
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <h5 class="fw-bold mb-3">
+                        <i class="bi bi-tools me-2 text-primary"></i>Required Skills
+                    </h5>
+                    <div class="text-muted">
+                        {{ job.required_skills|linebreaks }}
+                    </div>
+                </div>
+
+                {% if job.eligibility %}
+                <div>
+                    <h5 class="fw-bold mb-3">
+                        <i class="bi bi-check2-circle me-2 text-primary"></i>Eligibility
+                    </h5>
+                    <div class="text-muted">
+                        {{ job.eligibility|linebreaks }}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm p-4 h-100 bg-light-subtle">
+                <h5 class="fw-bold mb-3">Job Overview</h5>
+
+                <p class="mb-2">
+                    <strong>Posted by:</strong>
+                    {{ job.posted_by.get_full_name|default:job.posted_by.username }}
+                </p>
+
+                <p class="mb-3">
+                    <strong>Apply link:</strong><br>
+                    <a href="{{ job.application_link }}" target="_blank" class="text-decoration-none">
+                        Open application
+                    </a>
+                </p>
+
+                <div class="d-grid gap-2 mt-2">
+                   {% if job.status == "ended" %}
+        <button class="btn btn-secondary" disabled>
+            <i class="bi bi-x-circle me-1"></i> Application Closed
+        </button>
+
+    {% elif has_applied %}
+        <button class="btn btn-success" disabled>
+            <i class="bi bi-check-circle me-1"></i> Applied
+        </button>
+
+    {% else %}
+        <a href="{% url 'jobs:apply' job.pk %}" class="btn btn-primary">
+            <i class="bi bi-box-arrow-up-right me-1"></i> Apply Now
+        </a>
+    {% endif %}
+
+                    <a href="{% url 'jobs:bookmark' job.pk %}"
+                       class="btn {% if is_bookmarked %}btn-outline-danger{% else %}btn-outline-primary{% endif %}">
+                        {% if is_bookmarked %}
+                            <i class="bi bi-bookmark-x me-1"></i> Remove Bookmark
+                        {% else %}
+                            <i class="bi bi-bookmark-plus me-1"></i> Save Job
+                        {% endif %}
+                    </a>
+
+                    <a href="{% url 'jobs:list' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i> Back to Jobs
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

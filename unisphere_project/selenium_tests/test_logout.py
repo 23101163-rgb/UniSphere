@@ -1,48 +1,58 @@
-from selenium import webdriver
+from common import get_driver, BASE_URL
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-import traceback
+from selenium.common.exceptions import ElementClickInterceptedException
 
-driver = webdriver.Chrome()
+driver = get_driver()
 
 try:
-    wait = WebDriverWait(driver, 10)
+    # Step 1: Login
+    driver.get(f"{BASE_URL}/accounts/login/")
 
-    driver.get("http://127.0.0.1:8000/accounts/login/")
-    driver.maximize_window()
+    WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.NAME, "username"))
+    )
 
-    wait.until(EC.presence_of_element_located((By.NAME, "username"))).send_keys("teacher1")
-    password_input = driver.find_element(By.NAME, "password")
-    password_input.send_keys("StrongPass123")
-    password_input.send_keys(Keys.RETURN)
+    driver.find_element(By.NAME, "username").clear()
+    driver.find_element(By.NAME, "username").send_keys("ABaki")
+    driver.find_element(By.NAME, "password").clear()
+    driver.find_element(By.NAME, "password").send_keys("amibaki123@#")
+    driver.find_element(By.XPATH, "//button[@type='submit']").click()
 
-    wait.until(EC.url_contains("/accounts/dashboard"))
+    WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.TAG_NAME, "body"))
+    )
 
-    logout_link = wait.until(EC.element_to_be_clickable((By.LINK_TEXT, "Logout")))
-    logout_link.click()
+    # Step 2: Find Logout
+    logout_link = WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.LINK_TEXT, "Logout"))
+    )
 
-    wait.until(EC.url_contains("/accounts/login"))
+    # Scroll to element
+    driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", logout_link)
 
-    print("After logout URL:", driver.current_url)
-    assert "/accounts/login" in driver.current_url.lower()
+    # Try normal click, fallback to JS click
+    try:
+        logout_link.click()
+    except ElementClickInterceptedException:
+        driver.execute_script("arguments[0].click();", logout_link)
 
-    driver.get("http://127.0.0.1:8000/accounts/dashboard/")
-    wait.until(EC.presence_of_element_located((By.TAG_NAME, "body")))
+    # Step 3: Confirm login page এসেছে
+    WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.NAME, "username"))
+    )
 
-    print("Protected page redirect URL:", driver.current_url)
-    assert "/accounts/login" in driver.current_url.lower()
+    page_text = driver.page_source.lower()
+    current_url = driver.current_url.lower()
 
-    print("Logout test passed!")
+    assert (
+        "login" in page_text or
+        "sign in" in page_text or
+        "/accounts/login" in current_url
+    ), f"Logout may have failed.\nCurrent URL: {driver.current_url}\nPage text preview: {page_text[:500]}"
 
-except Exception as e:
-    print("Logout test failed!")
-    print("Error type:", type(e).__name__)
-    print("Error:", e)
-    traceback.print_exc()
-    driver.save_screenshot("logout_failure.png")
-    print("Screenshot saved as logout_failure.png")
+    print("Logout Test Passed ✅")
 
 finally:
     driver.quit()

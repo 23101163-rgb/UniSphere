@@ -1,0 +1,28 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Database
+db.sqlite3
+*.sqlite3
+
+# Environment files
+.env
+venv/
+env/
+.venv/
+
+# User uploaded files
+media/
+
+# Collected static files
+staticfiles/
+
+# IDE files
+.idea/
+.vscode/
+
+# Logs
+*.log

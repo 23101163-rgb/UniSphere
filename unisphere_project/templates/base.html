@@ -642,69 +642,102 @@ body.dark-mode .material-thumb {
     </button>
 </div>
             <div class="mt-3">
-                <a href="{% url 'accounts:dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
-                <a href="{% url 'materials:semesters' %}"><i class="bi bi-journal-text"></i> Study Materials</a>
-                <a href="{% url 'thesis:list' %}"><i class="bi bi-file-earmark-text"></i> Thesis Archive</a>
-                <a href="{% url 'thesis:mentors' %}"><i class="bi bi-people"></i> Find Mentors</a>
-                <a href="{% url 'research:groups' %}"><i class="bi bi-diagram-3"></i> Research Groups</a>
-                <!-- Faculty members er jonno -->
-{% if request.user.role == 'teacher' %}
-<a href="{% url 'research:my_supervisor_requests' %}"><i class="bi bi-inbox"></i> Supervisor Requests</a>
-{% endif %}
-                <a href="{% url 'forum:home' %}"><i class="bi bi-chat-dots"></i> Discussion Forum</a>
-                <a href="{% url 'jobs:list' %}"><i class="bi bi-briefcase"></i> Jobs & Internships</a>
-                <a href="{% url 'events:list' %}"><i class="bi bi-calendar-event"></i> Events</a>
-                <a href="{% url 'complaints:submit' %}"><i class="bi bi-exclamation-triangle"></i> Complaints</a>
-                <a href="{% url 'notifications:list' %}"
-   class="d-flex align-items-center justify-content-between position-relative">
+    <a href="{% url 'accounts:dashboard' %}">
+        <i class="bi bi-speedometer2"></i> Dashboard
+    </a>
 
-    <span>
-        <i class="bi bi-bell"></i> Notifications
-    </span>
+    <a href="{% url 'materials:semesters' %}">
+        <i class="bi bi-journal-text"></i> Study Materials
+    </a>
 
-    <span id="notification-badge"
-          class="badge bg-danger"
-          style="font-size:0.7rem; {% if unread_count == 0 %}display:none;{% endif %}">
-        {{ unread_count }}
-    </span>
+    <a href="{% url 'thesis:semesters' %}">
+        <i class="bi bi-file-earmark-text"></i> Thesis Archive
+    </a>
 
-</a>
+    <a href="{% url 'thesis:mentors' %}">
+        <i class="bi bi-people"></i> Find Mentors
+    </a>
 
-                <hr style="border-color: rgba(255,255,255,.2); margin: 10px 20px;">
+    <a href="{% url 'research:groups' %}">
+        <i class="bi bi-diagram-3"></i> Research Groups
+    </a>
 
-                <a href="{% url 'accounts:profile' %}"><i class="bi bi-person"></i> My Profile</a>
-                <a href="{% url 'accounts:alumni_directory' %}"><i class="bi bi-person-lines-fill"></i> Alumni Directory</a>
+    {% if request.user.role == 'teacher' %}
+    <a href="{% url 'research:my_supervisor_requests' %}">
+        <i class="bi bi-inbox"></i> Supervisor Requests
+    </a>
+    {% endif %}
 
-                {% if user.is_teacher or user.is_admin_user %}
-                <hr style="border-color: rgba(255,255,255,.2); margin: 10px 20px;">
-                <small class="text-white-50 px-3">APPROVAL</small>
+    <a href="{% url 'forum:home' %}">
+        <i class="bi bi-chat-dots"></i> Discussion Forum
+    </a>
 
-                <a href="{% url 'materials:pending' %}">
-                    <i class="bi bi-check-circle"></i> Pending Materials
-                </a>
+    <a href="{% url 'jobs:list' %}">
+        <i class="bi bi-briefcase"></i> Jobs & Internships
+    </a>
 
-                <a href="{% url 'jobs:pending' %}">
-                    <i class="bi bi-check-circle"></i> Pending Jobs
-                </a>
-                {% endif %}
+    <a href="{% url 'events:list' %}">
+        <i class="bi bi-calendar-event"></i> Events
+    </a>
 
-                {% if user.is_admin_user %}
-                <hr style="border-color: rgba(255,255,255,.2); margin: 10px 20px;">
-                <small class="text-white-50 px-3 mt-2">ADMIN</small>
+    <a href="{% url 'complaints:submit' %}">
+        <i class="bi bi-exclamation-triangle"></i> Complaints
+    </a>
 
-                <a href="{% url 'accounts:user_management' %}">
-                    <i class="bi bi-gear"></i> Manage Users
-                </a>
+    <a href="{% url 'notifications:list' %}"
+       class="d-flex align-items-center justify-content-between position-relative">
 
-                <a href="{% url 'complaints:manage' %}">
-                    <i class="bi bi-clipboard-check"></i> Manage Complaints
-                </a>
-                {% endif %}
+        <span>
+            <i class="bi bi-bell"></i> Notifications
+        </span>
 
-                <a href="{% url 'accounts:logout' %}" class="mt-3 text-danger">
-                    <i class="bi bi-box-arrow-left"></i> Logout
-                </a>
-            </div>
+        <span id="notification-badge"
+              class="badge bg-danger"
+              style="font-size:0.7rem; {% if unread_count == 0 %}display:none;{% endif %}">
+            {{ unread_count }}
+        </span>
+    </a>
+
+    <hr style="border-color: rgba(255,255,255,.2); margin: 10px 20px;">
+
+    <a href="{% url 'accounts:profile' %}">
+        <i class="bi bi-person"></i> My Profile
+    </a>
+
+    <a href="{% url 'accounts:alumni_directory' %}">
+        <i class="bi bi-person-lines-fill"></i> Alumni Directory
+    </a>
+
+    {% if user.is_teacher or user.is_admin_user %}
+    <hr style="border-color: rgba(255,255,255,.2); margin: 10px 20px;">
+    <small class="text-white-50 px-3">APPROVAL</small>
+
+    <a href="{% url 'materials:pending' %}">
+        <i class="bi bi-check-circle"></i> Pending Materials
+    </a>
+
+    <a href="{% url 'jobs:pending' %}">
+        <i class="bi bi-check-circle"></i> Pending Jobs
+    </a>
+    {% endif %}
+
+    {% if user.is_admin_user %}
+    <hr style="border-color: rgba(255,255,255,.2); margin: 10px 20px;">
+    <small class="text-white-50 px-3 mt-2">ADMIN</small>
+
+    <a href="{% url 'accounts:user_management' %}">
+        <i class="bi bi-gear"></i> Manage Users
+    </a>
+
+    <a href="{% url 'complaints:manage' %}">
+        <i class="bi bi-clipboard-check"></i> Manage Complaints
+    </a>
+    {% endif %}
+
+    <a href="{% url 'accounts:logout' %}" class="mt-3 text-danger">
+        <i class="bi bi-box-arrow-left"></i> Logout
+    </a>
+</div>
         </nav>
 
         <!-- Mobile nav -->

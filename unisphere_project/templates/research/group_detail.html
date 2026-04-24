@@ -1,0 +1,308 @@
+{% extends "base.html" %}
+{% block title %}{{ group.name }}{% endblock %}
+{% block content %}
+<div class="card p-4 mb-4">
+    <div class="d-flex justify-content-between align-items-start">
+        <div>
+            <h3>{{ group.name }}</h3>
+
+            <div class="d-flex flex-wrap gap-2 mt-2">
+                <span class="badge bg-{% if group.status == 'published' %}success{% elif group.status == 'forming' %}warning{% else %}primary{% endif %} fs-6">
+                    {{ group.get_status_display }}
+                </span>
+
+                {% if group.group_type == 'open' %}
+                <span class="badge bg-info text-dark fs-6">Open Group</span>
+                {% else %}
+                <span class="badge bg-dark fs-6">Closed Group</span>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if is_member and group.status == 'forming' and not is_creator %}
+        <a href="{% url 'research:group_leave' group.pk %}" class="btn btn-sm btn-outline-danger">Leave Group</a>
+        {% endif %}
+    </div>
+
+    <hr>
+
+    <p><strong>Research Area:</strong> {{ group.research_area }}</p>
+    {% if group.research_topic %}
+    <p><strong>Research Topic:</strong> {{ group.research_topic }}</p>
+    {% endif %}
+    <p>{{ group.description }}</p>
+
+    <!-- Members -->
+    <h5 class="mt-3">Members ({{ group.member_count }}/4)</h5>
+    <ul>
+    {% for m in group.members.all %}
+        <li>
+            {{ m.get_full_name }} ({{ m.role }})
+            {% if m == group.created_by %}
+                <span class="badge bg-info">Creator</span>
+            {% endif %}
+        </li>
+    {% endfor %}
+    </ul>
+
+    <!-- Supervisor Info -->
+    {% if group.supervisor %}
+    <p><strong>Supervisor:</strong> {{ group.supervisor.get_full_name }}</p>
+    {% endif %}
+    {% if group.co_supervisor %}
+    <p><strong>Co-Supervisor:</strong> {{ group.co_supervisor.get_full_name }}</p>
+    {% endif %}
+</div>
+
+<!-- ========== GROUP JOIN / INVITATION ACTIONS ========== -->
+
+{% if group.status == 'forming' %}
+    {% if is_creator %}
+        {% if group.group_type == 'open' %}
+        <div class="card p-3 mb-3 border-info">
+            <h5><i class="bi bi-people"></i> Join Requests</h5>
+            {% if pending_join_requests %}
+                {% for jr in pending_join_requests %}
+                <div class="border rounded p-2 mb-2 d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>{{ jr.requester.get_full_name }}</strong>
+                        <div class="small text-muted">{{ jr.requester.role }}</div>
+                    </div>
+                    <div>
+                        <a href="{% url 'research:approve_join_request' jr.pk %}" class="btn btn-sm btn-success me-1">Approve</a>
+                        <a href="{% url 'research:decline_join_request' jr.pk %}" class="btn btn-sm btn-outline-danger">Decline</a>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-muted mb-0">No pending join requests yet.</p>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if group.group_type == 'closed' %}
+        <div class="card p-3 mb-3 border-dark">
+            <h5><i class="bi bi-person-plus"></i> Invite Student / Alumni</h5>
+
+            {% if not group.is_full %}
+            <form method="post" action="{% url 'research:send_group_invitation' group.pk %}">
+                {% csrf_token %}
+                {% if invitation_form %}
+                    <div class="mb-2">
+                        {{ invitation_form.invited_user.label_tag }}
+                        {{ invitation_form.invited_user }}
+                    </div>
+                    <button type="submit" class="btn btn-dark btn-sm">Send Invitation</button>
+                {% endif %}
+            </form>
+            {% else %}
+            <p class="text-muted mb-0">Group is already full.</p>
+            {% endif %}
+        </div>
+
+        <div class="card p-3 mb-3 border-secondary">
+            <h5><i class="bi bi-envelope"></i> Pending Invitations</h5>
+            {% if pending_invitations %}
+                {% for inv in pending_invitations %}
+                <div class="border rounded p-2 mb-2">
+                    <strong>{{ inv.invited_user.get_full_name }}</strong>
+                    <div class="small text-muted">{{ inv.invited_user.role }}</div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-muted mb-0">No pending invitations yet.</p>
+            {% endif %}
+        </div>
+        {% endif %}
+    {% endif %}
+
+    {% if not is_member and request.user.role == 'student' or not is_member and request.user.role == 'alumni' %}
+        {% if group.group_type == 'open' %}
+            <div class="card p-3 mb-3 border-primary">
+                <h5><i class="bi bi-box-arrow-in-right"></i> Join This Group</h5>
+
+                {% if group.is_full %}
+                    <span class="badge bg-secondary">Group Full</span>
+                {% elif my_join_request %}
+                    <span class="badge bg-warning text-dark">Your join request is pending approval</span>
+                {% else %}
+                    <a href="{% url 'research:group_join' group.pk %}" class="btn btn-primary">Request to Join</a>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        {% if group.group_type == 'closed' %}
+            <div class="card p-3 mb-3 border-dark">
+                <h5><i class="bi bi-lock"></i> Closed Group</h5>
+
+                {% if my_invitation %}
+                    <p>You have been invited to join this group.</p>
+                    <a href="{% url 'research:accept_group_invitation' my_invitation.pk %}" class="btn btn-success me-2">Accept Invitation</a>
+                    <a href="{% url 'research:decline_group_invitation' my_invitation.pk %}" class="btn btn-outline-danger">Decline</a>
+                {% else %}
+                    <p class="text-muted mb-0">This is an invite-only group.</p>
+                {% endif %}
+            </div>
+        {% endif %}
+    {% endif %}
+{% endif %}
+
+<!-- ========== PHASE-BASED ACTIONS ========== -->
+
+<!-- FORMING: Creator can request supervisor when group is full -->
+{% if group.status == 'forming' and is_creator and group.is_full %}
+<div class="card p-3 mb-3 border-primary">
+    <h5><i class="bi bi-send"></i> Next Step: Request a Supervisor</h5>
+    <p>Your group has 4 members. Now request a faculty member as supervisor.</p>
+    <a href="{% url 'research:request_supervisor' group.pk %}" class="btn btn-primary">Request Supervisor</a>
+</div>
+{% endif %}
+
+<!-- ACTIVE: Supervisor can request co-supervisor or move forward -->
+{% if group.status == 'active' and is_supervisor %}
+<div class="card p-3 mb-3 border-success">
+    <h5><i class="bi bi-person-plus"></i> Next Step</h5>
+    <a href="{% url 'research:request_cosupervisor' group.pk %}" class="btn btn-success me-2">Request Co-Supervisor</a>
+    <a href="{% url 'research:select_topic' group.pk %}" class="btn btn-outline-info">Select Topic</a>
+</div>
+{% endif %}
+
+<!-- TOPIC SELECTION: Supervisor or co-supervisor selects topic -->
+{% if group.status == 'topic_selection' and is_supervisor or group.status == 'topic_selection' and is_cosupervisor %}
+<div class="card p-3 mb-3 border-info">
+    <h5><i class="bi bi-journal-text"></i> Next Step: Select Research Topic</h5>
+    <a href="{% url 'research:select_topic' group.pk %}" class="btn btn-info">Select Topic</a>
+</div>
+{% endif %}
+
+<!-- ASSESSMENT PHASE -->
+{% if group.status == 'assessment' %}
+    {% if is_supervisor or is_cosupervisor %}
+    <div class="card p-3 mb-3 border-warning">
+        <h5><i class="bi bi-clipboard-check"></i> Knowledge Assessment</h5>
+        {% if latest_assessment %}
+            <p>Latest Assessment: <strong>{{ latest_assessment.title }}</strong> ({{ latest_assessment.questions.count }} questions)</p>
+            <a href="{% url 'research:create_assessment' group.pk %}" class="btn btn-sm btn-warning me-2">Create New Assessment</a>
+            <a href="{% url 'research:add_question' latest_assessment.pk %}" class="btn btn-sm btn-outline-primary me-2">Add More Questions</a>
+            <a href="{% url 'research:assessment_results' latest_assessment.pk %}" class="btn btn-sm btn-outline-info me-2">View Results</a>
+            {% if group.all_assessments_passed %}
+            <a href="{% url 'research:advance_to_study' group.pk %}" class="btn btn-sm btn-success">Advance to Paper Study</a>
+            {% endif %}
+        {% else %}
+            <a href="{% url 'research:create_assessment' group.pk %}" class="btn btn-warning">Create Assessment</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if is_member %}
+    <div class="card p-3 mb-3">
+        <h5><i class="bi bi-pencil-square"></i> Take Assessment</h5>
+
+        {% if user_passed_any_assessment %}
+            <p>
+                <span class="badge bg-success">Passed</span>
+                You have already passed the assessment stage.
+            </p>
+
+        {% elif user_submission %}
+            <p>
+                Your Score: <strong>{{ user_submission.percentage }}%</strong>
+                {% if user_submission.passed %}
+                    <span class="badge bg-success">Passed</span>
+                {% else %}
+                    <span class="badge bg-danger">Failed</span>
+                    <span class="text-muted">Wait for faculty to create a new assessment.</span>
+                {% endif %}
+            </p>
+
+        {% elif latest_assessment %}
+            <a href="{% url 'research:take_assessment' latest_assessment.pk %}" class="btn btn-primary">Take Assessment</a>
+
+        {% else %}
+            <p class="text-muted">Assessment not created yet. Wait for supervisor/co-supervisor.</p>
+        {% endif %}
+    </div>
+    {% endif %}
+{% endif %}
+
+<!-- PAPER STUDY PHASE -->
+{% if group.status == 'paper_study' %}
+<div class="card p-3 mb-3 border-info">
+    <h5><i class="bi bi-book"></i> Reference Papers to Study</h5>
+    {% if reference_papers %}
+        <ul class="list-group mb-3">
+        {% for rp in reference_papers %}
+            <li class="list-group-item">
+                <a href="{{ rp.url }}" target="_blank">{{ rp.title }}</a>
+                <p class="small text-muted mb-0">{{ rp.description }}</p>
+            </li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p class="text-muted">No reference papers added yet.</p>
+    {% endif %}
+
+    {% if is_supervisor or is_cosupervisor %}
+        <a href="{% url 'research:add_reference' group.pk %}" class="btn btn-sm btn-outline-primary me-2">Add Reference Paper</a>
+        <a href="{% url 'research:advance_to_writing' group.pk %}" class="btn btn-sm btn-success">Advance to Writing Phase</a>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- PAPER WRITING PHASE -->
+{% if group.status == 'paper_writing' and is_member %}
+<div class="card p-3 mb-3 border-primary">
+    <h5><i class="bi bi-file-earmark-text"></i> Submit Your Research Paper</h5>
+    <a href="{% url 'research:submit_paper' group.pk %}" class="btn btn-primary">Submit Paper</a>
+</div>
+{% endif %}
+
+<!-- EVALUATION / PUBLISHED / REVISION VIEW -->
+{% if group.status == 'paper_writing' or group.status == 'evaluation' or group.status == 'published' %}
+<div class="card p-3 mb-3">
+    <h5><i class="bi bi-file-earmark-check"></i> Submitted Papers</h5>
+    {% for paper in papers %}
+    <div class="card p-3 mb-2">
+        <h6>{{ paper.title }}</h6>
+        <p class="small">{{ paper.abstract|truncatewords:30 }}</p>
+        <span class="badge bg-{% if paper.status == 'published' %}success{% elif paper.status == 'approved' %}primary{% elif paper.status == 'revision' %}warning{% else %}secondary{% endif %}">
+            {{ paper.get_status_display }}
+        </span>
+
+        {% if paper.document %}
+        <a href="{{ paper.document.url }}" class="btn btn-sm btn-outline-secondary ms-2" target="_blank">Download</a>
+        {% endif %}
+
+        {% if paper.reviews.all %}
+        <div class="mt-2">
+            <strong>Reviews:</strong>
+            {% for review in paper.reviews.all %}
+            <div class="small border-start ps-2 mt-1">
+                <strong>{{ review.reviewer.get_full_name }}</strong>:
+                {% if review.is_approved %}
+                    <span class="text-success">Approved</span>
+                {% else %}
+                    <span class="text-danger">Needs Revision</span>
+                {% endif %}
+                <br>{{ review.feedback }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if is_supervisor or is_cosupervisor %}
+            {% if paper.status == 'submitted' %}
+            <a href="{% url 'research:review_paper' paper.pk %}" class="btn btn-sm btn-warning mt-2">Review Paper</a>
+            {% endif %}
+            {% if paper.status == 'approved' %}
+            <a href="{% url 'research:publish_paper' paper.pk %}" class="btn btn-sm btn-success mt-2">Publish</a>
+            {% endif %}
+        {% endif %}
+    </div>
+    {% empty %}
+    <p class="text-muted mb-0">No papers submitted yet.</p>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% endblock %}

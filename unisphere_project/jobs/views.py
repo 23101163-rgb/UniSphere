@@ -53,7 +53,7 @@ def job_detail(request, pk):
     is_bookmarked = JobBookmark.objects.filter(user=request.user, job=job).exists()
     has_applied = JobApplication.objects.filter(applicant=request.user, job=job).exists()
 
-
+    # 🔥 status logic
     current_date = now().date()
     if job.application_deadline >= current_date:
         job.status = "running"

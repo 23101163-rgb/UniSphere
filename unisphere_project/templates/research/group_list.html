@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Research Groups{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3><i class="bi bi-diagram-3"></i> Research Groups</h3>
+    {% if request.user.role == 'student' or request.user.role == 'alumni' %}
+    <a href="{% url 'research:group_create' %}" class="btn btn-primary">Create Group</a>
+    {% endif %}
+</div>
+
+<div class="row">
+{% for g in groups %}
+<div class="col-md-4 mb-3">
+    <div class="card p-3 h-100">
+        <h5>{{ g.name }}</h5>
+
+        <div class="d-flex flex-wrap gap-2 mb-2">
+            <span class="badge bg-{% if g.status == 'published' %}success{% elif g.status == 'forming' %}warning{% else %}primary{% endif %}">
+                {{ g.get_status_display }}
+            </span>
+
+            {% if g.group_type == 'open' %}
+            <span class="badge bg-info text-dark">Open Group</span>
+            {% else %}
+            <span class="badge bg-dark">Closed Group</span>
+            {% endif %}
+        </div>
+
+        <p class="text-muted small">{{ g.research_area }}</p>
+        <p class="small">{{ g.description|truncatewords:20 }}</p>
+        <p class="small"><strong>Members:</strong> {{ g.member_count }}/4</p>
+
+        {% if g.supervisor %}
+        <p class="small"><strong>Supervisor:</strong> {{ g.supervisor.get_full_name }}</p>
+        {% endif %}
+
+        {% if g.co_supervisor %}
+        <p class="small"><strong>Co-Supervisor:</strong> {{ g.co_supervisor.get_full_name }}</p>
+        {% endif %}
+
+        {% if g.research_topic %}
+        <p class="small"><strong>Topic:</strong> {{ g.research_topic }}</p>
+        {% endif %}
+
+        <div class="mt-2 d-flex flex-wrap gap-2">
+            <a href="{% url 'research:group_detail' g.pk %}" class="btn btn-sm btn-outline-primary">View Details</a>
+
+            {% if request.user == g.created_by %}
+                <span class="badge bg-info">Creator</span>
+
+            {% elif request.user in g.members.all %}
+                <span class="badge bg-success">Member</span>
+
+            {% elif g.status == 'forming' and request.user.role == 'student' or g.status == 'forming' and request.user.role == 'alumni' %}
+                {% if g.is_full %}
+                    <span class="badge bg-secondary">Full</span>
+
+                {% elif g.group_type == 'open' %}
+                    {% if g.pk in pending_join_request_group_ids %}
+                        <span class="badge bg-warning text-dark">Request Pending</span>
+                    {% else %}
+                        <a href="{% url 'research:group_join' g.pk %}" class="btn btn-sm btn-primary">Request to Join</a>
+                    {% endif %}
+
+                {% elif g.group_type == 'closed' %}
+                    {% if g.pk in pending_invitation_group_ids %}
+                        <span class="badge bg-success">Invitation Received</span>
+                    {% else %}
+                        <span class="badge bg-dark">Invite Only</span>
+                    {% endif %}
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% empty %}
+<p class="text-muted">No research groups yet.</p>
+{% endfor %}
+</div>
+{% endblock %}

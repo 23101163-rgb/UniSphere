@@ -16,6 +16,7 @@ class RegisterForm(UserCreationForm):
         ]
     )
     profile_picture = forms.ImageField(required=False)
+    is_club_member = forms.BooleanField(required=False, label='Are you a club member?')
 
     class Meta:
         model = User
@@ -27,6 +28,9 @@ class RegisterForm(UserCreationForm):
             'last_name',
             'role',
             'profile_picture',
+            'is_club_member',
+            'club_name',
+            'club_position',
             'password1',
             'password2',
         ]
@@ -34,8 +38,11 @@ class RegisterForm(UserCreationForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        for field in self.fields.values():
-            field.widget.attrs['class'] = 'form-control'
+        for name, field in self.fields.items():
+            if isinstance(field.widget, forms.CheckboxInput):
+                field.widget.attrs['class'] = 'form-check-input'
+            else:
+                field.widget.attrs['class'] = 'form-control'
 
         self.fields['username'].widget.attrs['placeholder'] = 'Enter username'
         self.fields['email'].widget.attrs['placeholder'] = 'Enter your UAP email'
@@ -46,6 +53,8 @@ class RegisterForm(UserCreationForm):
         self.fields['password2'].widget.attrs['placeholder'] = 'Confirm password'
 
         self.fields['profile_picture'].label = 'Profile Picture (Optional)'
+        self.fields['club_name'].required = False
+        self.fields['club_position'].required = False
 
     def clean_email(self):
         email = self.cleaned_data.get('email', '').strip().lower()
@@ -81,6 +90,23 @@ class RegisterForm(UserCreationForm):
 
         return role
 
+    def clean(self):
+        cleaned_data = super().clean()
+        is_club_member = cleaned_data.get('is_club_member')
+        club_name = cleaned_data.get('club_name')
+        club_position = cleaned_data.get('club_position')
+
+        if is_club_member:
+            if not club_name:
+                self.add_error('club_name', 'Please select your club.')
+            if not club_position:
+                self.add_error('club_position', 'Please select your club position.')
+        else:
+            cleaned_data['club_name'] = ''
+            cleaned_data['club_position'] = ''
+
+        return cleaned_data
+
     def save(self, commit=True):
         user = super().save(commit=False)
         user.email = self.cleaned_data.get('email', '').strip().lower()
@@ -88,6 +114,9 @@ class RegisterForm(UserCreationForm):
         user.first_name = self.cleaned_data.get('first_name', '').strip()
         user.last_name = self.cleaned_data.get('last_name', '').strip()
         user.role = self.cleaned_data.get('role')
+        user.is_club_member = self.cleaned_data.get('is_club_member', False)
+        user.club_name = self.cleaned_data.get('club_name', '')
+        user.club_position = self.cleaned_data.get('club_position', '')
 
         profile_picture = self.cleaned_data.get('profile_picture')
         if profile_picture:
@@ -130,17 +159,24 @@ class ProfileUpdateForm(forms.ModelForm):
             'graduation_year',
             'company',
             'designation',
-            'is_mentor_available'
+            'is_mentor_available',
+            'is_club_member',
+            'club_name',
+            'club_position',
         ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        for field in self.fields.values():
-            field.widget.attrs['class'] = 'form-control'
+        for name, field in self.fields.items():
+            if isinstance(field.widget, forms.CheckboxInput):
+                field.widget.attrs['class'] = 'form-check-input'
+            else:
+                field.widget.attrs['class'] = 'form-control'
 
-        self.fields['is_mentor_available'].widget.attrs['class'] = 'form-check-input'
         self.fields['profile_picture'].widget.attrs['class'] = 'form-control'
+        self.fields['club_name'].required = False
+        self.fields['club_position'].required = False
 
     def clean_email(self):
         email = self.cleaned_data.get('email', '').strip().lower()
@@ -153,3 +189,20 @@ class ProfileUpdateForm(forms.ModelForm):
             raise forms.ValidationError('This email is already in use by another account.')
 
         return email
+
+    def clean(self):
+        cleaned_data = super().clean()
+        is_club_member = cleaned_data.get('is_club_member')
+        club_name = cleaned_data.get('club_name')
+        club_position = cleaned_data.get('club_position')
+
+        if is_club_member:
+            if not club_name:
+                self.add_error('club_name', 'Please select your club.')
+            if not club_position:
+                self.add_error('club_position', 'Please select your club position.')
+        else:
+            cleaned_data['club_name'] = ''
+            cleaned_data['club_position'] = ''
+
+        return cleaned_data

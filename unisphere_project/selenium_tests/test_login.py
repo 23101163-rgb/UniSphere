@@ -1,43 +1,38 @@
-from selenium import webdriver
+from common import get_driver, BASE_URL
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-import traceback
 
-driver = webdriver.Chrome()
+driver = get_driver()
 
 try:
-    driver.get("http://127.0.0.1:8000/accounts/login/")
-    driver.maximize_window()
+    # Open login page
+    driver.get(f"{BASE_URL}/accounts/login/")
 
-    wait = WebDriverWait(driver, 10)
-
-    username_input = wait.until(
+    # Wait for login form to load
+    WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.NAME, "username"))
     )
-    password_input = driver.find_element(By.NAME, "password")
 
-    username_input.send_keys("teacher1")
-    password_input.send_keys("StrongPass123")
-    password_input.send_keys(Keys.RETURN)
+    # Enter credentials
+    driver.find_element(By.NAME, "username").send_keys("ABaki")
+    driver.find_element(By.NAME, "password").send_keys("amibaki123@#")
 
-    wait.until(EC.presence_of_element_located((By.TAG_NAME, "body")))
+    # Click login button
+    driver.find_element(By.XPATH, "//button[@type='submit']").click()
 
+    # Wait for redirect to dashboard
+    WebDriverWait(driver, 10).until(
+        EC.url_contains("dashboard")
+    )
+
+    # Debug info (optional but helpful)
     print("Current URL:", driver.current_url)
-    print("Page title:", driver.title)
-    print("Page text:\n", driver.find_element(By.TAG_NAME, "body").text)
 
-    assert "dashboard" in driver.current_url.lower()
-    print("Login test passed!")
+    # Assertion (reliable)
+    assert "/dashboard" in driver.current_url, "Login failed - not redirected to dashboard"
 
-except Exception as e:
-    print("Login test failed!")
-    print("Error type:", type(e).__name__)
-    print("Error:", e)
-    traceback.print_exc()
-    driver.save_screenshot("login_failure.png")
-    print("Screenshot saved as login_failure.png")
+    print("Login Test Passed ✅")
 
 finally:
     driver.quit()

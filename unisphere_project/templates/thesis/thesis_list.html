@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Thesis Archive{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3><i class="bi bi-file-earmark-text"></i> Thesis Archive</h3>
+    <a href="{% url 'thesis:create' %}" class="btn btn-primary">Add Thesis</a>
+</div>
+<form class="mb-3" method="get"><div class="input-group"><input type="text" name="q" class="form-control" placeholder="Search by title, area, author..." value="{{ query }}"><button class="btn btn-primary">Search</button></div></form>
+<div class="row">{% for t in theses %}<div class="col-md-6 mb-3"><div class="card p-3">
+    <h5>{{ t.title }}</h5><p class="text-muted small">{{ t.authors }} | {{ t.year }} | {{ t.research_area }}</p>
+    <p class="small">{{ t.abstract|truncatewords:30 }}</p>
+    <a href="{% url 'thesis:detail' t.pk %}" class="btn btn-sm btn-outline-primary">View Details</a>
+</div></div>{% empty %}<p class="text-muted">No thesis resources found.</p>{% endfor %}</div>
+{% endblock %}

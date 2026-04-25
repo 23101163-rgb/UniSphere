@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Mentorship Requests{% endblock %}
+{% block content %}
+<h3>Mentorship Requests</h3>
+<div class="card p-3"><table class="table"><thead><tr><th>Topic</th><th>{% if request.user.role in "teacher,alumni" %}Student{% else %}Mentor{% endif %}</th><th>Status</th><th>Date</th>{% if request.user.role in "teacher,alumni" %}<th>Action</th>{% endif %}</tr></thead>
+<tbody>{% for r in requests_list %}<tr>
+    <td>{{ r.topic }}</td>
+    <td>{% if request.user.role in "teacher,alumni" %}{{ r.student.get_full_name }}{% else %}{{ r.mentor.get_full_name }}{% endif %}</td>
+    <td><span class="badge bg-{% if r.status == 'accepted' %}success{% elif r.status == 'declined' %}danger{% else %}warning{% endif %}">{{ r.get_status_display }}</span></td>
+    <td>{{ r.created_at|date:"d M Y" }}</td>
+    {% if request.user.role in "teacher,alumni" and r.status == "pending" %}<td>
+        <a href="{% url 'thesis:handle_request' r.pk 'accepted' %}" class="btn btn-sm btn-success">Accept</a>
+        <a href="{% url 'thesis:handle_request' r.pk 'declined' %}" class="btn btn-sm btn-danger">Decline</a>
+    </td>{% endif %}
+</tr>{% endfor %}</tbody></table></div>
+{% endblock %}

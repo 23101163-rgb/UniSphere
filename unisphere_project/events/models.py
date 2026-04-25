@@ -47,11 +47,12 @@ class Event(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    is_approved = models.BooleanField(default=False)
 
     class Meta:
         ordering = ['date', 'time', '-created_at']
 
-    def _str_(self):
+    def __str__(self):
         return self.title
 
     def get_event_status(self):
@@ -76,11 +77,18 @@ class EventRegistration(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE
     )
+
+    full_name = models.CharField(max_length=200, blank=True, default='')
+    email = models.EmailField(blank=True, default='')
+    phone = models.CharField(max_length=20, blank=True, default='')
+    department = models.CharField(max_length=150, blank=True, default='')
+    university_id = models.CharField(max_length=50, blank=True, default='')
+    note = models.TextField(blank=True, default='')
     registered_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         unique_together = ('event', 'user')
         ordering = ['-registered_at']
 
-    def _str_(self):
-        return f'{self.user.username} registered for {self.event.title}'
+    def __str__(self):
+        return f'{self.full_name} registered for {self.event.title}'

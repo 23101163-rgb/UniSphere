@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     'complaints',
     'events',
     'notifications',
+    'research',
 ]
 
 MIDDLEWARE = [

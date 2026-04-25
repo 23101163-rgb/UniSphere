@@ -1,86 +1,62 @@
-from django.db import models
-from django.conf import settings
-from django.utils import timezone
+from django import forms
+from .models import Event, EventRegistration
 
 
-class Event(models.Model):
-    TYPE_CHOICES = [
-        ('seminar', 'Seminar'),
-        ('workshop', 'Workshop'),
-        ('hackathon', 'Hackathon'),
-        ('competition', 'Competition'),
-        ('training', 'Training'),
-        ('career', 'Career Session'),
-    ]
-
-    ORGANIZER_CHOICES = [
-        ('club', 'Club Event'),
-        ('non_club', 'Non-Club Event'),
-    ]
-
-    CLUB_CHOICES = [
-        ('uap_programming_contest_club', 'UAP Programming Contest Club'),
-        ('software_hardware_club', 'Software and Hardware Club'),
-        ('cyber_security_club', 'Cyber Security Club, CSE, UAP'),
-        ('career_development_club', 'Career Development Club'),
-        ('math_club', 'Math Club'),
-        ('research_publication_units', 'Research and Publication Units'),
-        ('robotics_club', 'Robotics Club'),
-        ('photography_club', 'Photography Club'),
-        ('sports_club', 'Sports Club'),
-        ('cultural_club', 'Cultural Club'),
-    ]
-
-    title = models.CharField(max_length=300)
-    description = models.TextField()
-    event_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
-    organizer_category = models.CharField(max_length=20, choices=ORGANIZER_CHOICES, default='club')
-    club_name = models.CharField(max_length=100, choices=CLUB_CHOICES, blank=True)
-    date = models.DateField(db_index=True)
-    time = models.TimeField()
-    venue = models.CharField(max_length=300)
-    registration_link = models.URLField(blank=True)
-    created_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name='created_events'
+class EventForm(forms.ModelForm):
+    date = forms.DateField(
+        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'})
     )
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    time = forms.TimeField(
+        widget=forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'})
+    )
 
     class Meta:
-        ordering = ['date', 'time', '-created_at']
+        model = Event
+        fields = [
+            'title',
+            'description',
+            'organizer_category',
+            'club_name',
+            'event_type',
+            'date',
+            'time',
+            'venue',
+            'registration_link'
+        ]
 
-    def _str_(self):
-        return self.title
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-    def get_event_status(self):
-        today = timezone.localdate()
-        if self.date > today:
-            return 'upcoming'
-        elif self.date == today:
-            return 'ongoing'
-        return 'ended'
+        for name, field in self.fields.items():
+            if name not in ('date', 'time'):
+                field.widget.attrs['class'] = 'form-control'
 
-    def registration_count(self):
-        return self.registrations.count()
+        self.fields['club_name'].required = False
+        self.fields['registration_link'].required = False
 
 
-class EventRegistration(models.Model):
-    event = models.ForeignKey(
-        Event,
-        on_delete=models.CASCADE,
-        related_name='registrations'
-    )
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE
-    )
-    registered_at = models.DateTimeField(auto_now_add=True)
-
+class EventRegistrationForm(forms.ModelForm):
     class Meta:
-        unique_together = ('event', 'user')
-        ordering = ['-registered_at']
+        model = EventRegistration
+        fields = ['full_name', 'email', 'phone', 'department', 'university_id', 'note']
 
-    def _str_(self):
-        return f'{self.user.username} registered for {self.event.title}'
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+
+        for field in self.fields.values():
+            field.widget.attrs['class'] = 'form-control'
+
+        self.fields['note'].widget = forms.Textarea(
+            attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Optional note'
+            }
+        )
+
+        if user:
+            self.fields['full_name'].initial = user.get_full_name()
+            self.fields['email'].initial = user.email
+            self.fields['department'].initial = user.department
+            self.fields['university_id'].initial = user.university_id

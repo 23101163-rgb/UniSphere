@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Pending Events{% endblock %}
+{% block content %}
+<h3 class="mb-3"><i class="bi bi-hourglass-split"></i> Pending Events ({{ pending_events|length }})</h3>
+<div class="card p-0 overflow-hidden">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Title</th>
+                    <th>Created By</th>
+                    <th>Type</th>
+                    <th>Date</th>
+                    <th>Venue</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for event in pending_events %}
+                <tr>
+                    <td>
+                        <a href="{% url 'events:detail' event.pk %}" class="text-decoration-none">{{ event.title }}</a>
+                    </td>
+                    <td>
+                        {{ event.created_by.get_full_name }}
+                        <span class="badge bg-secondary">{{ event.created_by.get_role_display }}</span>
+                    </td>
+                    <td>{{ event.get_event_type_display }}</td>
+                    <td><small>{{ event.date|date:"d M Y" }} {{ event.time|time:"h:i A" }}</small></td>
+                    <td>{{ event.venue }}</td>
+                    <td class="text-end">
+                        <a href="{% url 'events:approve' event.pk %}" class="btn btn-sm btn-success" onclick="return confirm('Approve this event?')">
+                            <i class="bi bi-check-lg"></i> Approve
+                        </a>
+                        <a href="{% url 'events:reject' event.pk %}" class="btn btn-sm btn-danger" onclick="return confirm('Reject and delete this event?')">
+                            <i class="bi bi-x-lg"></i> Reject
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="text-center text-muted py-4">No pending events.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -55,6 +55,7 @@ class RegisterForm(UserCreationForm):
         self.fields['profile_picture'].label = 'Profile Picture (Optional)'
         self.fields['club_name'].required = False
         self.fields['club_position'].required = False
+        self.fields['username'].validators = []
 
     def clean_email(self):
         email = self.cleaned_data.get('email', '').strip().lower()

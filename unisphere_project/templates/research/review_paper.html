@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Review Paper{% endblock %}
+{% block content %}
+<div class="col-md-8">
+    <div class="card p-4">
+        <h3>Review: {{ paper.title }}</h3>
+        <p><strong>Abstract:</strong> {{ paper.abstract }}</p>
+        {% if paper.document %}
+        <p><a href="{{ paper.document.url }}" target="_blank" class="btn btn-sm btn-outline-primary">Download Paper</a></p>
+        {% endif %}
+        <hr>
+        <h5>Your Review</h5>
+        <form method="post">
+            {% csrf_token %}
+            {% for f in form %}
+            <div class="mb-3">
+                <label class="form-label">{{ f.label }}</label>
+                {{ f }}
+            </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary">Submit Review</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

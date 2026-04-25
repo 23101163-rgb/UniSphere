@@ -34,9 +34,15 @@
                     {% endif %}
 
                     {% if profile_user.is_club_member %}
-                        <span class="badge bg-success">
-                            <i class="bi bi-people-fill me-1"></i> Club Member
-                        </span>
+                        {% if profile_user.is_club_verified %}
+                            <span class="badge bg-success">
+                                <i class="bi bi-patch-check-fill me-1"></i> Verified Club Member
+                            </span>
+                        {% else %}
+                            <span class="badge bg-warning text-dark">
+                                <i class="bi bi-hourglass-split me-1"></i> Club Verification Pending
+                            </span>
+                        {% endif %}
                     {% endif %}
                 </div>
 
@@ -54,6 +60,11 @@
         <div class="mb-3">
             <h6 class="fw-bold mb-2">
                 <i class="bi bi-diagram-3 me-1 text-success"></i> Club Information
+                {% if profile_user.is_club_verified %}
+                    <span class="badge bg-success ms-2"><i class="bi bi-patch-check-fill"></i> Verified</span>
+                {% else %}
+                    <span class="badge bg-warning text-dark ms-2"><i class="bi bi-hourglass-split"></i> Pending Verification</span>
+                {% endif %}
             </h6>
 
             <div class="d-flex flex-wrap gap-2">
@@ -87,6 +98,16 @@
 
         {% if profile_user.company %}
             <p><strong>Company:</strong> {{ profile_user.company }}</p>
+        {% endif %}
+
+        <!-- 🔬 RESEARCH INFO -->
+        {% if profile_user.role == 'student' or profile_user.role == 'alumni' %}
+            <p><strong>Published Research Papers:</strong> {{ published_papers_count }}</p>
+        {% endif %}
+
+        {% if profile_user.role == 'teacher' %}
+            <p><strong>Supervised Research Papers:</strong> {{ supervised_papers_count }}</p>
+            <p><strong>Co-Supervised Research Papers:</strong> {{ co_supervised_papers_count }}</p>
         {% endif %}
 
         <!-- 🔹 ACTION -->

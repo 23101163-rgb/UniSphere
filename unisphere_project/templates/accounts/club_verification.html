@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Club Member Verification{% endblock %}
+{% block content %}
+<div class="col-md-10 mx-auto">
+    <h3 class="mb-3"><i class="bi bi-patch-check"></i> Club Member Verification</h3>
+
+    <!-- Pending Requests -->
+    <h5 class="mt-4 mb-2"><i class="bi bi-hourglass-split text-warning"></i> Pending Requests ({{ pending_members|length }})</h5>
+    <div class="card p-0 overflow-hidden mb-4">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Name</th>
+                        <th>University ID</th>
+                        <th>Role</th>
+                        <th>Club</th>
+                        <th>Position</th>
+                        <th>Joined</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for member in pending_members %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                {% if member.profile_picture %}
+                                <img src="{{ member.profile_picture.url }}" class="rounded-circle me-2" width="30" height="30" style="object-fit:cover;">
+                                {% else %}
+                                <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-2" style="width:30px;height:30px;font-size:12px;">{{ member.first_name|first }}</div>
+                                {% endif %}
+                                {{ member.get_full_name }}
+                            </div>
+                        </td>
+                        <td>{{ member.university_id }}</td>
+                        <td><span class="badge bg-primary">{{ member.get_role_display }}</span></td>
+                        <td>{{ member.get_club_display }}</td>
+                        <td>{{ member.get_club_position_display }}</td>
+                        <td><small>{{ member.created_at|date:"d M Y" }}</small></td>
+                        <td class="text-end">
+                            <a href="{% url 'accounts:verify_club' member.pk %}" class="btn btn-sm btn-success" onclick="return confirm('Verify {{ member.get_full_name }} as club member?')">
+                                <i class="bi bi-check-lg"></i> Verify
+                            </a>
+                            <a href="{% url 'accounts:reject_club' member.pk %}" class="btn btn-sm btn-danger" onclick="return confirm('Reject {{ member.get_full_name }}?')">
+                                <i class="bi bi-x-lg"></i> Reject
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="7" class="text-center text-muted py-4">No pending club verification requests.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Verified Members -->
+    <h5 class="mb-2"><i class="bi bi-patch-check-fill text-success"></i> Verified Members ({{ verified_members|length }})</h5>
+    <div class="card p-0 overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Name</th>
+                        <th>University ID</th>
+                        <th>Role</th>
+                        <th>Club</th>
+                        <th>Position</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for member in verified_members %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                {% if member.profile_picture %}
+                                <img src="{{ member.profile_picture.url }}" class="rounded-circle me-2" width="30" height="30" style="object-fit:cover;">
+                                {% else %}
+                                <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-2" style="width:30px;height:30px;font-size:12px;">{{ member.first_name|first }}</div>
+                                {% endif %}
+                                {{ member.get_full_name }}
+                                <i class="bi bi-patch-check-fill text-success ms-1"></i>
+                            </div>
+                        </td>
+                        <td>{{ member.university_id }}</td>
+                        <td><span class="badge bg-primary">{{ member.get_role_display }}</span></td>
+                        <td>{{ member.get_club_display }}</td>
+                        <td>{{ member.get_club_position_display }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="text-center text-muted py-4">No verified club members yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

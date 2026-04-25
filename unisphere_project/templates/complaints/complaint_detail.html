@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Complaint: {{ complaint.subject }}{% endblock %}
+{% block content %}
+<div class="col-md-8 mx-auto">
+    <div class="card p-4">
+        <h4>{{ complaint.subject }}</h4>
+        <table class="table table-borderless">
+            <tr><th width="150">Category</th><td>{{ complaint.get_category_display }}</td></tr>
+            <tr><th>Status</th><td>
+                <span class="badge {% if complaint.status == 'resolved' %}bg-success{% elif complaint.status == 'closed' %}bg-secondary{% elif complaint.status == 'in_review' %}bg-warning text-dark{% else %}bg-primary{% endif %}">
+                    {{ complaint.get_status_display }}
+                </span>
+            </td></tr>
+            <tr><th>Complaint To</th><td>
+                {% if complaint.target_type == 'teacher' and complaint.target_teacher %}
+                    {{ complaint.target_teacher.get_full_name }} (Teacher)
+                {% else %}
+                    Admin / University
+                {% endif %}
+            </td></tr>
+            <tr><th>Submitted By</th><td>{% if complaint.is_anonymous %}Anonymous{% else %}{{ complaint.submitted_by.get_full_name }}{% endif %}</td></tr>
+            <tr><th>Date</th><td>{{ complaint.created_at|date:"d M Y, h:i A" }}</td></tr>
+        </table>
+        <hr>
+        <h6>Description</h6>
+        <p>{{ complaint.description|linebreaks }}</p>
+
+        {% if complaint.admin_response %}
+        <hr>
+        <h6><i class="bi bi-reply"></i> Response</h6>
+        <div class="bg-light p-3 rounded">{{ complaint.admin_response|linebreaks }}</div>
+        {% endif %}
+
+        <div class="mt-3">
+            {% if request.user.is_admin_user or complaint.target_teacher == request.user %}
+            <a href="{% url 'complaints:respond' complaint.pk %}" class="btn btn-warning btn-sm"><i class="bi bi-reply"></i> Respond</a>
+            {% endif %}
+            <a href="javascript:history.back()" class="btn btn-outline-secondary btn-sm">Back</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

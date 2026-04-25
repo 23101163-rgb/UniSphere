@@ -1,11 +1,89 @@
 {% extends "base.html" %}
 {% block title %}Alumni Directory{% endblock %}
 {% block content %}
-<h3><i class="bi bi-person-lines-fill"></i> Alumni Directory</h3>
-<form class="mb-3" method="get"><div class="input-group"><input type="text" name="q" class="form-control" placeholder="Search alumni..." value="{{ query }}"><button class="btn btn-primary">Search</button></div></form>
-<div class="row">{% for alum in alumni_list %}<div class="col-md-4 mb-3"><div class="card p-3">
-    <h5>{{ alum.get_full_name }}</h5><p class="text-muted mb-1">{{ alum.company }}</p>
-    {% if alum.is_mentor_available %}<span class="badge bg-success">Open to Mentor</span>{% endif %}
-    <a href="{% url 'accounts:profile_detail' alum.pk %}" class="btn btn-sm btn-outline-primary mt-2">View Profile</a>
-</div></div>{% empty %}<p class="text-muted">No alumni found.</p>{% endfor %}</div>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3><i class="bi bi-person-lines-fill"></i> Alumni Directory</h3>
+    <span class="badge bg-primary fs-6">{{ alumni_list|length }} Alumni</span>
+</div>
+
+<!-- Search Bar -->
+<form class="mb-4" method="get">
+    <div class="input-group">
+        <span class="input-group-text bg-dark text-white"><i class="bi bi-search"></i></span>
+        <input type="text" name="q" class="form-control" placeholder="Search by name, company, expertise..." value="{{ query }}">
+        <button class="btn btn-primary">Search</button>
+        {% if query %}
+        <a href="{% url 'accounts:alumni_directory' %}" class="btn btn-outline-secondary">Clear</a>
+        {% endif %}
+    </div>
+</form>
+
+<!-- Alumni Grid -->
+<div class="row">
+    {% for alum in alumni_list %}
+   <div class="col-xl-3 col-lg-4 col-md-4 col-sm-6 mb-4">
+        <a href="{% url 'accounts:profile_detail' alum.pk %}" class="text-decoration-none">
+            <div class="card h-100 border-0 alumni-card" style="background:#1e293b; border-radius:12px; overflow:hidden; transition: transform 0.2s;">
+                <!-- Profile Picture -->
+                <div class="text-center pt-4 pb-2">
+                    {% if alum.profile_picture %}
+                    <img src="{{ alum.profile_picture.url }}"
+                         class="rounded-circle"
+                         style="width:120px; height:120px; object-fit:cover; border:3px solid #334155;">
+                    {% else %}
+                    <div class="rounded-circle mx-auto d-flex align-items-center justify-content-center"
+                         style="width:120px; height:120px; background:linear-gradient(135deg,#6366f1,#8b5cf6); font-size:2.5rem; color:white; border:3px solid #334155;">
+                        {{ alum.first_name|first }}{{ alum.last_name|first }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Info -->
+                <div class="card-body text-center px-3 pt-1 pb-3">
+                    <h6 class="fw-bold mb-1" style="color:#f1f5f9;">{{ alum.get_full_name }}</h6>
+                    {% if alum.designation and alum.company %}
+                    <small style="color:#94a3b8;">{{ alum.designation }}, {{ alum.company }}</small>
+                    {% elif alum.company %}
+                    <small style="color:#94a3b8;">{{ alum.company }}</small>
+                    {% elif alum.designation %}
+                    <small style="color:#94a3b8;">{{ alum.designation }}</small>
+                    {% endif %}
+
+                    {% if alum.graduation_year %}
+                    <div class="mt-2">
+                        <span class="badge" style="background:#334155; color:#94a3b8;">Batch {{ alum.graduation_year }}</span>
+                    </div>
+                    {% endif %}
+
+                    <!-- Badges -->
+                    <div class="mt-2 d-flex flex-wrap justify-content-center gap-1">
+                        {% if alum.is_mentor_available %}
+                        <span class="badge bg-success"><i class="bi bi-mortarboard me-1"></i>Mentor</span>
+                        {% endif %}
+                        {% if alum.is_club_member and alum.is_club_verified %}
+                        <span class="badge" style="background:#6366f1;"><i class="bi bi-patch-check-fill me-1"></i>Club</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center py-5">
+        <i class="bi bi-people" style="font-size:48px; color:#64748b;"></i>
+        {% if query %}
+        <p class="text-muted mt-2">No alumni found for "{{ query }}".</p>
+        {% else %}
+        <p class="text-muted mt-2">No alumni registered yet.</p>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+
+<style>
+    .alumni-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    }
+</style>
 {% endblock %}

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Find Mentors{% endblock %}
+{% block content %}
+<h3><i class="bi bi-people"></i> Available Mentors</h3>
+<form class="mb-3" method="get"><div class="input-group"><input type="text" name="q" class="form-control" placeholder="Search by name, interest, expertise..." value="{{ query }}"><button class="btn btn-primary">Search</button></div></form>
+<div class="row">{% for m in mentors %}<div class="col-md-4 mb-3"><div class="card p-3">
+    <h5>{{ m.get_full_name }}</h5><span class="badge bg-primary mb-2">{{ m.get_role_display }}</span>
+    {% if m.research_interests %}<p class="small"><strong>Interests:</strong> {{ m.research_interests }}</p>{% endif %}
+    {% if m.expertise %}<p class="small"><strong>Expertise:</strong> {{ m.expertise }}</p>{% endif %}
+    <a href="{% url 'thesis:send_request' m.pk %}" class="btn btn-sm btn-primary">Request Mentorship</a>
+    <a href="{% url 'accounts:profile_detail' m.pk %}" class="btn btn-sm btn-outline-secondary">Profile</a>
+</div></div>{% empty %}<p class="text-muted">No mentors currently available.</p>{% endfor %}</div>
+{% endblock %}

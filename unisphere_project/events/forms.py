@@ -1,5 +1,5 @@
 from django import forms
-from .models import Event
+from .models import Event, EventRegistration
 
 
 class EventForm(forms.ModelForm):
@@ -33,3 +33,30 @@ class EventForm(forms.ModelForm):
 
         self.fields['club_name'].required = False
         self.fields['registration_link'].required = False
+
+
+class EventRegistrationForm(forms.ModelForm):
+    class Meta:
+        model = EventRegistration
+        fields = ['full_name', 'email', 'phone', 'department', 'university_id', 'note']
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+
+        for field in self.fields.values():
+            field.widget.attrs['class'] = 'form-control'
+
+        self.fields['note'].widget = forms.Textarea(
+            attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Optional note'
+            }
+        )
+
+        if user:
+            self.fields['full_name'].initial = user.get_full_name()
+            self.fields['email'].initial = user.email
+            self.fields['department'].initial = user.department
+            self.fields['university_id'].initial = user.university_id

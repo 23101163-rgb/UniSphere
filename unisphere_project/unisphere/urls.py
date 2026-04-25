@@ -1,15 +1,12 @@
 from django.contrib import admin
 from django.urls import path, include
-from django.http import HttpResponse
 from django.conf import settings
 from django.conf.urls.static import static
-
-def home(request):
-    return HttpResponse('UniSphere_project initial starter project is running.')
+from django.shortcuts import redirect
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', home, name='home'),
+    path('', lambda r: redirect('accounts:dashboard')),
     path('accounts/', include('accounts.urls')),
     path('materials/', include('materials.urls')),
     path('thesis/', include('thesis.urls')),
@@ -18,6 +15,7 @@ urlpatterns = [
     path('complaints/', include('complaints.urls')),
     path('events/', include('events.urls')),
     path('notifications/', include('notifications.urls')),
+
 ]
 
 if settings.DEBUG:

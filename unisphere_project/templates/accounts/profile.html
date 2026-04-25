@@ -4,6 +4,8 @@
 {% block content %}
 <div class="col-md-8">
     <div class="card p-4">
+
+        <!-- 🔹 HEADER -->
         <div class="d-flex align-items-center mb-3">
             {% if profile_user.profile_picture %}
                 <img src="{{ profile_user.profile_picture.url }}"
@@ -18,8 +20,32 @@
             {% endif %}
 
             <div>
-                <h3 class="mb-0">{{ profile_user.get_full_name }}</h3>
-                <span class="badge bg-primary">{{ profile_user.get_role_display }}</span>
+                <h3 class="mb-1">{{ profile_user.get_full_name }}</h3>
+
+                <div class="d-flex flex-wrap gap-2 mb-1">
+                    <span class="badge bg-primary">
+                        {{ profile_user.get_role_display }}
+                    </span>
+
+                    {% if profile_user.is_mentor_available %}
+                        <span class="badge bg-success">
+                            Mentor Available
+                        </span>
+                    {% endif %}
+
+                    {% if profile_user.is_club_member %}
+                        {% if profile_user.is_club_verified %}
+                            <span class="badge bg-success">
+                                <i class="bi bi-patch-check-fill me-1"></i> Verified Club Member
+                            </span>
+                        {% else %}
+                            <span class="badge bg-warning text-dark">
+                                <i class="bi bi-hourglass-split me-1"></i> Club Verification Pending
+                            </span>
+                        {% endif %}
+                    {% endif %}
+                </div>
+
                 <p class="text-muted mb-0">
                     {{ profile_user.university_id }}
                     {% if profile_user.department %} | {{ profile_user.department }}{% endif %}
@@ -29,6 +55,35 @@
 
         <hr>
 
+        <!-- 🔥 CLUB INFO -->
+        {% if profile_user.is_club_member %}
+        <div class="mb-3">
+            <h6 class="fw-bold mb-2">
+                <i class="bi bi-diagram-3 me-1 text-success"></i> Club Information
+                {% if profile_user.is_club_verified %}
+                    <span class="badge bg-success ms-2"><i class="bi bi-patch-check-fill"></i> Verified</span>
+                {% else %}
+                    <span class="badge bg-warning text-dark ms-2"><i class="bi bi-hourglass-split"></i> Pending Verification</span>
+                {% endif %}
+            </h6>
+
+            <div class="d-flex flex-wrap gap-2">
+                {% if profile_user.club_name %}
+                    <span class="badge bg-primary">
+                        {{ profile_user.get_club_display }}
+                    </span>
+                {% endif %}
+
+                {% if profile_user.club_position %}
+                    <span class="badge bg-dark">
+                        {{ profile_user.get_club_position_display }}
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- 🔹 BASIC INFO -->
         {% if profile_user.bio %}
             <p><strong>Bio:</strong> {{ profile_user.bio }}</p>
         {% endif %}
@@ -45,13 +100,23 @@
             <p><strong>Company:</strong> {{ profile_user.company }}</p>
         {% endif %}
 
-        {% if profile_user.is_mentor_available %}
-            <span class="badge bg-success">Available for Mentorship</span>
+        <!-- 🔬 RESEARCH INFO -->
+        {% if profile_user.role == 'student' or profile_user.role == 'alumni' %}
+            <p><strong>Published Research Papers:</strong> {{ published_papers_count }}</p>
         {% endif %}
 
-        {% if profile_user == request.user %}
-            <a href="{% url 'accounts:profile_edit' %}" class="btn btn-primary mt-3">Edit Profile</a>
+        {% if profile_user.role == 'teacher' %}
+            <p><strong>Supervised Research Papers:</strong> {{ supervised_papers_count }}</p>
+            <p><strong>Co-Supervised Research Papers:</strong> {{ co_supervised_papers_count }}</p>
         {% endif %}
+
+        <!-- 🔹 ACTION -->
+        {% if profile_user == request.user %}
+            <a href="{% url 'accounts:profile_edit' %}" class="btn btn-primary mt-3 btn-ripple">
+                Edit Profile
+            </a>
+        {% endif %}
+
     </div>
 </div>
 {% endblock %}

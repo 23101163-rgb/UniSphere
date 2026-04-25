@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Add Question{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <div class="card p-4">
+            <h3>Add Question to "{{ assessment.title }}"</h3>
+            <form method="post">
+                {% csrf_token %}
+                {% for f in form %}
+                <div class="mb-3">
+                    <label class="form-label">{{ f.label }}</label>
+                    {{ f }}
+                </div>
+                {% endfor %}
+                <button type="submit" name="add_another" class="btn btn-primary me-2">Save & Add Another</button>
+                <button type="submit" class="btn btn-success">Save & Finish</button>
+            </form>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card p-4">
+            <h5>Added Questions ({{ questions.count }})</h5>
+            {% for q in questions %}
+            <div class="border-bottom pb-2 mb-2">
+                <strong>Q{{ forloop.counter }}:</strong> {{ q.question_text }}
+                <div class="small">A) {{ q.option_a }} | B) {{ q.option_b }} | C) {{ q.option_c }} | D) {{ q.option_d }}</div>
+                <span class="badge bg-success small">Answer: {{ q.correct_option|upper }}</span>
+            </div>
+            {% empty %}
+            <p class="text-muted">No questions yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

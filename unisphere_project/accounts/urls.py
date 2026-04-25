@@ -14,6 +14,9 @@ urlpatterns = [
     path('profile/edit/', views.profile_edit_view, name='profile_edit'),
     path('alumni/', views.alumni_directory_view, name='alumni_directory'),
     path('manage-users/', views.user_management_view, name='user_management'),
+    path('club-verification/', views.club_verification_requests, name='club_verification'),
+    path('club-verify/<int:pk>/', views.verify_club_member, name='verify_club'),
+    path('club-reject/<int:pk>/', views.reject_club_member, name='reject_club'),
 
     path(
         'password-reset/',

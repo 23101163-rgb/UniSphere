@@ -61,6 +61,7 @@ class User(AbstractUser):
 
     # 🔥 CLUB SYSTEM
     is_club_member = models.BooleanField(default=False)
+    is_club_verified = models.BooleanField(default=False)
     club_name = models.CharField(max_length=100, choices=CLUB_CHOICES, blank=True)
     club_position = models.CharField(max_length=50, choices=CLUB_POSITION_CHOICES, blank=True)
 
@@ -97,11 +98,23 @@ class User(AbstractUser):
             if not User.objects.filter(university_id=new_id).exists():
                 return new_id
 
-    # 🔥 SAFETY + AUTO UNIVERSITY ID
+    # 🔥 SAFETY + AUTO UNIVERSITY ID + CLUB VERIFICATION RESET
     def save(self, *args, **kwargs):
         if not self.is_club_member:
             self.club_name = ''
             self.club_position = ''
+            self.is_club_verified = False
+
+        # Reset verification if club info changed
+        if self.pk:
+            try:
+                old = User.objects.get(pk=self.pk)
+                if (old.club_name != self.club_name or
+                    old.club_position != self.club_position or
+                    old.is_club_member != self.is_club_member):
+                    self.is_club_verified = False
+            except User.DoesNotExist:
+                pass
 
         if not self.university_id:
             self.university_id = self.generate_unique_university_id()

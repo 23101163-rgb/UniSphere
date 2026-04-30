@@ -5,33 +5,89 @@ from django.contrib import messages
 from django.db.models import Q
 
 from .forms import RegisterForm, LoginForm, ProfileUpdateForm
-from .models import User
+from .models import User, ClubMembership
 from notifications.utils import create_notification
 from research.models import ResearchGroup, ResearchPaper
+
+
+def get_user_display_name(user):
+    return user.get_full_name() or user.username
+
+
+def sync_user_club_status(user):
+    """
+    Keep old User club fields working as fallback,
+    while the new ClubMembership table handles multiple clubs.
+    """
+    all_memberships = user.club_memberships.all().order_by('created_at')
+    verified_memberships = all_memberships.filter(is_verified=True)
+
+    first_membership = all_memberships.first()
+    first_verified_membership = verified_memberships.first()
+
+    user.is_club_member = all_memberships.exists()
+    user.is_club_verified = verified_memberships.exists()
+
+    if first_verified_membership:
+        user.club_name = first_verified_membership.club_name
+        user.club_position = first_verified_membership.club_position
+    elif first_membership:
+        user.club_name = first_membership.club_name
+        user.club_position = first_membership.club_position
+    else:
+        user.club_name = ''
+        user.club_position = ''
+
+    user.save(update_fields=[
+        'is_club_member',
+        'is_club_verified',
+        'club_name',
+        'club_position',
+    ])
+
+
+def notify_staff_about_club_membership(user, memberships, action_text='registered as'):
+    admins_teachers = User.objects.filter(role__in=['admin', 'teacher'])
+
+    for membership in memberships:
+        for staff in admins_teachers:
+            create_notification(
+                recipient=staff,
+                title='New Club Verification Request',
+                message=(
+                    f'{get_user_display_name(user)} {action_text} '
+                    f'"{membership.get_club_name_display()}" '
+                    f'({membership.get_club_position_display()}). Please verify.'
+                ),
+                link='/accounts/club-verification/'
+            )
 
 
 def register_view(request):
     if request.method == 'POST':
         form = RegisterForm(request.POST, request.FILES)
+
         if form.is_valid():
             user = form.save()
 
-            # ✅ Notify admins/teachers if registered as club member
             if user.is_club_member:
-                admins_teachers = User.objects.filter(role__in=['admin', 'teacher'])
-                for staff in admins_teachers:
-                    create_notification(
-                        recipient=staff,
-                        title='New Club Verification Request',
-                        message=f'{user.get_full_name()} registered as a club member in "{user.get_club_display()}" ({user.get_club_position_display()}). Please verify.',
-                        link='/accounts/club-verification/'
-                    )
+                pending_memberships = ClubMembership.objects.filter(
+                    user=user,
+                    is_verified=False
+                )
+
+                notify_staff_about_club_membership(
+                    user=user,
+                    memberships=pending_memberships,
+                    action_text='registered as a club member in'
+                )
 
             login(request, user)
-            messages.success(request, 'Sign up successful! Welcome to UniLink.')
+            messages.success(request, 'Sign up successful! Welcome to UnisPhere.')
             return redirect('accounts:dashboard')
-        else:
-            messages.error(request, 'Please correct the errors below.')
+
+        messages.error(request, 'Please correct the errors below.')
+
     else:
         form = RegisterForm()
 
@@ -41,13 +97,18 @@ def register_view(request):
 def login_view(request):
     if request.method == 'POST':
         form = LoginForm(request, data=request.POST)
+
         if form.is_valid():
             user = form.get_user()
             login(request, user)
-            messages.success(request, f'Welcome back, {user.get_full_name() or user.username}!')
+            messages.success(
+                request,
+                f'Welcome back, {get_user_display_name(user)}!'
+            )
             return redirect('accounts:dashboard')
-        else:
-            messages.error(request, 'Wrong username/email or password.')
+
+        messages.error(request, 'Wrong username/email or password.')
+
     else:
         form = LoginForm(request)
 
@@ -103,7 +164,9 @@ def dashboard_view(request):
         'supervising_groups': supervising_groups,
         'co_supervising_groups': co_supervising_groups,
     }
+
     return render(request, 'accounts/dashboard.html', context)
+
 
 @login_required
 def profile_view(request, pk=None):
@@ -140,34 +203,45 @@ def profile_view(request, pk=None):
         'co_supervised_papers_count': co_supervised_papers_count,
     })
 
+
 @login_required
 def profile_edit_view(request):
-    old_club = request.user.is_club_member
-    old_club_name = request.user.club_name
-    old_club_position = request.user.club_position
+    old_club_memberships = {
+        membership.club_name: membership.club_position
+        for membership in ClubMembership.objects.filter(user=request.user)
+    }
 
     if request.method == 'POST':
         form = ProfileUpdateForm(request.POST, request.FILES, instance=request.user)
-        if form.is_valid():
-            form.save()
 
-            # ✅ Notify admins/teachers if new or changed club membership
-            new_club = request.user.is_club_member
-            new_club_name = request.user.club_name
-            if new_club and (not old_club or old_club_name != new_club_name or old_club_position != request.user.club_position):
-                admins_teachers = User.objects.filter(role__in=['admin', 'teacher'])
-                for staff in admins_teachers:
-                    create_notification(
-                        recipient=staff,
-                        title='New Club Verification Request',
-                        message=f'{request.user.get_full_name()} requested club membership in "{request.user.get_club_display()}" as "{request.user.get_club_position_display()}". Please verify.',
-                        link='/accounts/club-verification/'
-                    )
+        if form.is_valid():
+            user = form.save()
+
+            pending_memberships = ClubMembership.objects.filter(
+                user=user,
+                is_verified=False
+            )
+
+            changed_or_new_pending_memberships = []
+
+            for membership in pending_memberships:
+                old_position = old_club_memberships.get(membership.club_name)
+
+                if old_position != membership.club_position:
+                    changed_or_new_pending_memberships.append(membership)
+
+            if changed_or_new_pending_memberships:
+                notify_staff_about_club_membership(
+                    user=user,
+                    memberships=changed_or_new_pending_memberships,
+                    action_text='requested club membership in'
+                )
 
             messages.success(request, 'Profile updated successfully!')
             return redirect('accounts:profile')
-        else:
-            messages.error(request, 'Please correct the errors below.')
+
+        messages.error(request, 'Please correct the errors below.')
+
     else:
         form = ProfileUpdateForm(instance=request.user)
 
@@ -207,62 +281,108 @@ def user_management_view(request):
 
 @login_required
 def club_verification_requests(request):
-    """Teacher/Admin sees pending club verification requests"""
+    """
+    Teacher/Admin sees club-wise pending verification requests.
+    One user can have multiple club requests.
+    Each ClubMembership is verified separately.
+    """
     if not request.user.is_teacher() and not request.user.is_admin_user():
         messages.error(request, 'Access denied.')
         return redirect('accounts:dashboard')
 
-    pending_members = User.objects.filter(is_club_member=True, is_club_verified=False).order_by('-created_at')
-    verified_members = User.objects.filter(is_club_member=True, is_club_verified=True).order_by('-created_at')
+    pending_memberships = ClubMembership.objects.select_related('user').filter(
+        is_verified=False
+    ).order_by('-created_at')
+
+    verified_memberships = ClubMembership.objects.select_related('user').filter(
+        is_verified=True
+    ).order_by('-created_at')
 
     return render(request, 'accounts/club_verification.html', {
-        'pending_members': pending_members,
-        'verified_members': verified_members,
+        'pending_memberships': pending_memberships,
+        'verified_memberships': verified_memberships,
     })
 
 
 @login_required
 def verify_club_member(request, pk):
-    """Approve a club member"""
+    """
+    Approve one club membership request.
+    pk = ClubMembership id, not User id.
+    """
     if not request.user.is_teacher() and not request.user.is_admin_user():
         messages.error(request, 'Access denied.')
         return redirect('accounts:dashboard')
 
-    member = get_object_or_404(User, pk=pk)
-    member.is_club_verified = True
-    member.save()
+    membership = get_object_or_404(
+        ClubMembership.objects.select_related('user'),
+        pk=pk
+    )
+
+    membership.is_verified = True
+    membership.authorized_to_post = True
+    membership.save(update_fields=['is_verified', 'authorized_to_post'])
+
+    member = membership.user
+    sync_user_club_status(member)
 
     create_notification(
         recipient=member,
         title='Club Membership Verified!',
-        message=f'Your membership in "{member.get_club_display()}" as "{member.get_club_position_display()}" has been verified by {request.user.get_full_name()}.',
+        message=(
+            f'Your membership in "{membership.get_club_name_display()}" '
+            f'as "{membership.get_club_position_display()}" has been verified by '
+            f'{get_user_display_name(request.user)}.'
+        ),
         link='/accounts/profile/'
     )
 
-    messages.success(request, f'{member.get_full_name()} has been verified as a club member.')
+    messages.success(
+        request,
+        f'{get_user_display_name(member)} has been verified for '
+        f'{membership.get_club_name_display()}.'
+    )
+
     return redirect('accounts:club_verification')
 
 
 @login_required
 def reject_club_member(request, pk):
-    """Reject a club member request"""
+    """
+    Reject one club membership request.
+    pk = ClubMembership id, not User id.
+    """
     if not request.user.is_teacher() and not request.user.is_admin_user():
         messages.error(request, 'Access denied.')
         return redirect('accounts:dashboard')
 
-    member = get_object_or_404(User, pk=pk)
-    member.is_club_member = False
-    member.is_club_verified = False
-    member.club_name = ''
-    member.club_position = ''
-    member.save()
+    membership = get_object_or_404(
+        ClubMembership.objects.select_related('user'),
+        pk=pk
+    )
+
+    member = membership.user
+    club_name_display = membership.get_club_name_display()
+    club_position_display = membership.get_club_position_display()
+
+    membership.delete()
+    sync_user_club_status(member)
 
     create_notification(
         recipient=member,
         title='Club Membership Rejected',
-        message=f'Your club membership request has been rejected by {request.user.get_full_name()}. Please contact the club authority for more info.',
+        message=(
+            f'Your club membership request for "{club_name_display}" '
+            f'as "{club_position_display}" has been rejected by '
+            f'{get_user_display_name(request.user)}. Please contact the club authority for more info.'
+        ),
         link='/accounts/profile/'
     )
 
-    messages.info(request, f'{member.get_full_name()} club membership has been rejected.')
+    messages.info(
+        request,
+        f'{get_user_display_name(member)} club membership request for '
+        f'{club_name_display} has been rejected.'
+    )
+
     return redirect('accounts:club_verification')

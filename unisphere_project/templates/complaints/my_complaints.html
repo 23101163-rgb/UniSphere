@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}My Complaints{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3><i class="bi bi-clipboard2-pulse"></i> My Complaints</h3>
+    <a href="{% url 'complaints:submit' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus"></i> New Complaint</a>
+</div>
+<div class="card p-0 overflow-hidden">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Subject</th>
+                    <th>Complaint To</th>
+                    <th>Category</th>
+                    <th>Status</th>
+                    <th>Submitted</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for complaint in complaints %}
+                <tr>
+                    <td>{{ complaint.subject }}</td>
+                    <td>
+                        {% if complaint.target_type == 'teacher' and complaint.target_teacher %}
+                            <i class="bi bi-person"></i> {{ complaint.target_teacher.get_full_name }}
+                        {% else %}
+                            <i class="bi bi-building"></i> Admin
+                        {% endif %}
+                    </td>
+                    <td>{{ complaint.get_category_display }}</td>
+                    <td>
+                        <span class="badge {% if complaint.status == 'resolved' %}bg-success{% elif complaint.status == 'closed' %}bg-secondary{% elif complaint.status == 'in_review' %}bg-warning text-dark{% elif complaint.status == 'under_investigation' %}bg-info{% else %}bg-primary{% endif %}">
+                            {{ complaint.get_status_display }}
+                        </span>
+                    </td>
+                    <td><small>{{ complaint.created_at|date:"d M Y" }}</small></td>
+                    <td class="text-end"><a href="{% url 'complaints:detail' complaint.pk %}" class="btn btn-sm btn-outline-primary">Track</a></td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="text-center text-muted py-4">You have not submitted any complaints yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

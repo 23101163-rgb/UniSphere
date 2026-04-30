@@ -1,3 +1,4 @@
+
 from django.db import models
 from django.conf import settings
 
@@ -45,4 +46,3 @@ class JobApplication(models.Model):
 
     def __str__(self):
         return f"{self.applicant.username} -> {self.job.title}"
-

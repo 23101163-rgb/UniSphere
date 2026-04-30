@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Respond to Complaint{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <!-- Complaint Summary Card -->
+        <div class="card p-4 mb-3">
+            <h5><i class="bi bi-info-circle"></i> Complaint Details</h5>
+            <table class="table table-borderless table-sm mb-0">
+                <tr><th width="140">Subject</th><td>{{ complaint.subject }}</td></tr>
+                <tr><th>Submitted By</th><td>{% if complaint.is_anonymous %}Anonymous{% else %}{{ complaint.submitted_by.get_full_name }}{% endif %}</td></tr>
+                <tr><th>Complaint To</th><td>
+                    {% if complaint.target_type == 'teacher' and complaint.target_teacher %}
+                        {{ complaint.target_teacher.get_full_name }} (Teacher)
+                    {% else %}
+                        Admin / University
+                    {% endif %}
+                </td></tr>
+                <tr><th>Category</th><td>{{ complaint.get_category_display }}</td></tr>
+                <tr><th>Current Status</th><td>
+                    <span class="badge {% if complaint.status == 'resolved' %}bg-success{% elif complaint.status == 'closed' %}bg-secondary{% else %}bg-primary{% endif %}">
+                        {{ complaint.get_status_display }}
+                    </span>
+                </td></tr>
+                <tr><th>Date</th><td>{{ complaint.created_at|date:"d M Y, h:i A" }}</td></tr>
+            </table>
+            <hr>
+            <h6>Description</h6>
+            <p class="mb-0">{{ complaint.description|linebreaks }}</p>
+        </div>
+
+        <!-- Response Form -->
+        <div class="card p-4">
+            <h5><i class="bi bi-reply"></i> Your Response</h5>
+            <form method="post">
+                {% csrf_token %}
+                {% for field in form %}
+                <div class="mb-3">
+                    <label class="form-label">{{ field.label }}</label>
+                    {{ field }}
+                    {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                </div>
+                {% endfor %}
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-send"></i> Save Response</button>
+                    {% if request.user.is_admin_user %}
+                    <a href="{% url 'complaints:manage' %}" class="btn btn-outline-secondary">Back</a>
+                    {% else %}
+                    <a href="{% url 'complaints:teacher_manage' %}" class="btn btn-outline-secondary">Back</a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

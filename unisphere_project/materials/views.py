@@ -82,7 +82,7 @@ def material_create(request):
                     request.user.is_admin_user()
             )
             material.save()
-
+            # material.save() এর পর add করো
 
             create_notification(
                 user=request.user,
@@ -174,7 +174,7 @@ def material_download(request, pk):
         link=f'/materials/{material.pk}/'
     )
 
-    # 🔥 2. UPLOADER NOTIFICATION
+
     if request.user != material.uploaded_by:
         create_notification(
             user=material.uploaded_by,
@@ -201,7 +201,7 @@ def material_approve(request, pk):
     material.is_approved = True
     material.save()
 
-    # 🔔 Notification trigger
+
     if material.uploaded_by != request.user:
         create_notification(
             recipient=material.uploaded_by,

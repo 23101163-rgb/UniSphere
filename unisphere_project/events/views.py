@@ -81,14 +81,22 @@ def event_create(request):
         return redirect('events:list')
 
     if request.method == 'POST':
-        form = EventForm(request.POST)
+        form = EventForm(request.POST, user=request.user)
         if form.is_valid():
             event = form.save(commit=False)
 
-            # Club member student → auto assign their club
-            if request.user.is_student() and request.user.is_club_member:
-                if event.organizer_category == 'club':
-                    event.club_name = request.user.club_name
+            # Club event permission: old single-club field still works,
+            # and new multi-club memberships are also supported.
+            if event.organizer_category == 'club':
+                authorized_clubs = request.user.get_authorized_club_names()
+
+                if not (request.user.is_admin_user() or request.user.is_teacher()):
+                    if not event.club_name and len(authorized_clubs) == 1:
+                        event.club_name = authorized_clubs[0]
+
+                    if event.club_name not in authorized_clubs:
+                        messages.error(request, 'You can upload events only for your authorized club.')
+                        return redirect('events:create')
 
             # Non-club event → clear club_name
             if event.organizer_category != 'club':
@@ -103,7 +111,7 @@ def event_create(request):
             if (
                 request.user.is_teacher() or
                 request.user.is_admin_user() or
-                (request.user.is_club_member and request.user.is_club_verified)
+                (event.organizer_category == 'club' and event.club_name in request.user.get_authorized_club_names())
             ):
                 event.is_approved = True
             else:
@@ -130,7 +138,7 @@ def event_create(request):
         else:
             messages.error(request, 'Please correct the errors below.')
     else:
-        form = EventForm()
+        form = EventForm(user=request.user)
 
     return render(request, 'events/event_form.html', {
         'form': form,

@@ -4,6 +4,60 @@
 
 {% block content_public %}
 
+<style>
+#club-names-wrapper .club-checkbox-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 14px;
+    max-height: 220px;
+    overflow-y: auto;
+    padding: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.04);
+}
+
+#club-names-wrapper .club-checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    padding: 6px 8px;
+    border-radius: 10px;
+}
+
+#club-names-wrapper input[type="checkbox"] {
+    float: none;
+    margin: 0;
+    flex-shrink: 0;
+}
+
+#club-names-wrapper .form-check-label {
+    margin: 0;
+    line-height: 1.3;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+#teacher-course-wrapper textarea {
+    min-height: 95px;
+    resize: vertical;
+}
+
+.club-position-dynamic-wrapper {
+    display: none;
+}
+
+.club-position-dynamic-wrapper select {
+    margin-top: 4px;
+}
+
+@media (max-width: 576px) {
+    #club-names-wrapper .club-checkbox-list {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
 <div class="text-center mb-4">
     <div class="mb-3">
         <img
@@ -32,40 +86,69 @@
     </div>
 {% endif %}
 
-<form method="post" enctype="multipart/form-data">
+<form method="post" enctype="multipart/form-data" novalidate>
     {% csrf_token %}
 
     {% for field in form %}
-        {% if field.name == 'club_name' %}
+        {% if field.name == 'teacher_course_name' %}
+            <div class="mb-3 text-start" id="teacher-course-wrapper">
+
+        {% elif field.name == 'club_names' %}
+            <div class="mb-3 text-start" id="club-names-wrapper">
+
+        {% elif 'club_position_for_' in field.name %}
+            <div class="mb-3 text-start club-position-dynamic-wrapper">
+
+        {% elif field.name == 'club_name' %}
             <div class="mb-3 text-start" id="club-name-wrapper">
+
         {% elif field.name == 'club_position' %}
             <div class="mb-3 text-start" id="club-position-wrapper">
+
         {% else %}
             <div class="mb-3 text-start">
         {% endif %}
 
-        {% if field.name == 'is_club_member' %}
-            <div class="form-check text-white">
-                {{ field }}
-                <label class="form-check-label fw-semibold" for="{{ field.id_for_label }}">
+            {% if field.name == 'is_club_member' %}
+                <div class="form-check text-white">
+                    {{ field }}
+                    <label class="form-check-label fw-semibold" for="{{ field.id_for_label }}">
+                        {{ field.label }}
+                    </label>
+                </div>
+
+            {% elif field.name == 'club_names' %}
+                <label class="form-label fw-semibold text-white d-block">
                     {{ field.label }}
                 </label>
+
+                <div class="club-checkbox-list">
+                    {% for checkbox in field %}
+                        <div class="form-check club-checkbox-item">
+                            {{ checkbox.tag }}
+                            <label class="form-check-label" for="{{ checkbox.id_for_label }}">
+                                {{ checkbox.choice_label }}
+                            </label>
+                        </div>
+                    {% endfor %}
+                </div>
+
+            {% else %}
+                <label class="form-label fw-semibold text-white" for="{{ field.id_for_label }}">
+                    {{ field.label }}
+                </label>
+                {{ field }}
+            {% endif %}
+
+            {% if field.help_text %}
+                <small class="text-white-50 d-block mt-1">{{ field.help_text }}</small>
+            {% endif %}
+
+            {% for error in field.errors %}
+                <div class="text-warning small mt-1">{{ error }}</div>
+            {% endfor %}
+
             </div>
-        {% else %}
-            <label class="form-label fw-semibold text-white" for="{{ field.id_for_label }}">
-                {{ field.label }}
-            </label>
-            {{ field }}
-        {% endif %}
-
-        {% if field.help_text %}
-            <small class="text-white-50 d-block mt-1">{{ field.help_text }}</small>
-        {% endif %}
-
-        {% for error in field.errors %}
-            <div class="text-warning small mt-1">{{ error }}</div>
-        {% endfor %}
-        </div>
     {% endfor %}
 
     <button type="submit" class="btn btn-primary w-100 py-2 btn-ripple">
@@ -80,31 +163,124 @@
     </a>
 </p>
 
-<!-- 🔥 JS (UNCHANGED) -->
 <script>
 document.addEventListener("DOMContentLoaded", function () {
+    const roleField = document.getElementById("id_role");
+    const teacherCourseWrapper = document.getElementById("teacher-course-wrapper");
+    const teacherCourseField = document.getElementById("id_teacher_course_name");
+
     const clubMemberField = document.getElementById("id_is_club_member");
+    const clubNamesWrapper = document.getElementById("club-names-wrapper");
     const clubNameWrapper = document.getElementById("club-name-wrapper");
     const clubPositionWrapper = document.getElementById("club-position-wrapper");
     const clubNameField = document.getElementById("id_club_name");
     const clubPositionField = document.getElementById("id_club_position");
 
-    function toggleClubFields() {
-        if (!clubMemberField) return;
+    function toggleTeacherCourseField() {
+        if (!roleField) return;
 
-        if (clubMemberField.checked) {
-            if (clubNameWrapper) clubNameWrapper.style.display = "block";
-            if (clubPositionWrapper) clubPositionWrapper.style.display = "block";
+        if (roleField.value === "teacher") {
+            if (teacherCourseWrapper) {
+                teacherCourseWrapper.style.display = "block";
+            }
         } else {
-            if (clubNameWrapper) clubNameWrapper.style.display = "none";
-            if (clubPositionWrapper) clubPositionWrapper.style.display = "none";
-            if (clubNameField) clubNameField.value = "";
-            if (clubPositionField) clubPositionField.value = "";
+            if (teacherCourseWrapper) {
+                teacherCourseWrapper.style.display = "none";
+            }
+
+            if (teacherCourseField) {
+                teacherCourseField.value = "";
+            }
         }
     }
 
+    function toggleClubFields() {
+        if (!clubMemberField) return;
+
+        const dynamicPositionWrappers = document.querySelectorAll(".club-position-dynamic-wrapper");
+        const selectedClubCheckboxes = document.querySelectorAll('input[name="club_names"]');
+        const positionSelectFields = document.querySelectorAll(".club-position-select");
+
+        dynamicPositionWrappers.forEach(function (wrapper) {
+            wrapper.style.display = "none";
+        });
+
+        if (clubMemberField.checked) {
+            if (clubNamesWrapper) {
+                clubNamesWrapper.style.display = "block";
+            }
+
+            if (clubNameWrapper) {
+                clubNameWrapper.style.display = "none";
+            }
+
+            if (clubPositionWrapper) {
+                clubPositionWrapper.style.display = "none";
+            }
+
+            selectedClubCheckboxes.forEach(function (checkbox) {
+                const selectedClub = checkbox.value;
+
+                positionSelectFields.forEach(function (selectField) {
+                    const wrapper = selectField.closest(".club-position-dynamic-wrapper");
+
+                    if (!wrapper) return;
+
+                    if (selectField.dataset.clubPositionFor === selectedClub) {
+                        if (checkbox.checked) {
+                            wrapper.style.display = "block";
+                        } else {
+                            wrapper.style.display = "none";
+                            selectField.value = "";
+                        }
+                    }
+                });
+            });
+
+        } else {
+            if (clubNamesWrapper) {
+                clubNamesWrapper.style.display = "none";
+            }
+
+            if (clubNameWrapper) {
+                clubNameWrapper.style.display = "none";
+            }
+
+            if (clubPositionWrapper) {
+                clubPositionWrapper.style.display = "none";
+            }
+
+            selectedClubCheckboxes.forEach(function (checkbox) {
+                checkbox.checked = false;
+            });
+
+            positionSelectFields.forEach(function (selectField) {
+                selectField.value = "";
+            });
+
+            if (clubNameField) {
+                clubNameField.value = "";
+            }
+
+            if (clubPositionField) {
+                clubPositionField.value = "";
+            }
+        }
+    }
+
+    toggleTeacherCourseField();
+    if (roleField) {
+        roleField.addEventListener("change", toggleTeacherCourseField);
+    }
+
     toggleClubFields();
-    clubMemberField.addEventListener("change", toggleClubFields);
+    if (clubMemberField) {
+        clubMemberField.addEventListener("change", toggleClubFields);
+    }
+
+    document.querySelectorAll('input[name="club_names"]').forEach(function (checkbox) {
+        checkbox.addEventListener("change", toggleClubFields);
+    });
 });
 </script>
 

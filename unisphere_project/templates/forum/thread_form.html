@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="col-md-6 mx-auto">
+    <div class="card p-4">
+        <h4><i class="bi bi-pencil-square"></i> {{ title }}</h4>
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {% for f in form %}
+            <div class="mb-3">
+                <label class="form-label">{{ f.label }}</label>
+                {{ f }}
+                {% if f.errors %}<small class="text-danger">{{ f.errors.0 }}</small>{% endif %}
+            </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary"><i class="bi bi-send"></i> {{ title }}</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

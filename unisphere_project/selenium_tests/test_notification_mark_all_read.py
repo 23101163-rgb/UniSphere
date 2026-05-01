@@ -4,7 +4,7 @@ import sys
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, PROJECT_ROOT)
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "unilink.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "unisphere.settings")
 
 import django
 django.setup()
@@ -91,3 +91,4 @@ try:
 
 finally:
     driver.quit()
+

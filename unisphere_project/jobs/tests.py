@@ -18,6 +18,7 @@ class JobTests(TestCase):
             university_id='900001',
             role='admin'
         )
+
         self.student = User.objects.create_user(
             username='student1',
             email='student1@uap-bd.edu',
@@ -25,6 +26,7 @@ class JobTests(TestCase):
             university_id='900002',
             role='student'
         )
+
         self.poster = User.objects.create_user(
             username='poster1',
             email='poster1@uap-bd.edu',
@@ -40,7 +42,7 @@ class JobTests(TestCase):
             description='Job description',
             required_skills='Python, Django',
             eligibility='CSE students',
-            salary_range='20k-30k',
+            salary_range='25000',
             application_deadline=date.today() + timedelta(days=7),
             application_link='https://example.com/apply',
             posted_by=self.poster,
@@ -49,12 +51,15 @@ class JobTests(TestCase):
 
     def test_job_list_loads_for_logged_in_user(self):
         self.client.login(username='student1', password='testpass123')
+
         response = self.client.get(reverse('jobs:list'))
+
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Software Engineer')
 
     def test_job_create_by_student(self):
         self.client.login(username='student1', password='testpass123')
+
         response = self.client.post(reverse('jobs:create'), {
             'title': 'Backend Intern',
             'company_name': 'XYZ Ltd',
@@ -62,13 +67,14 @@ class JobTests(TestCase):
             'description': 'Internship desc',
             'required_skills': 'Python',
             'eligibility': 'Student',
-            'salary_range': '10k',
+            'salary_range': '10000',
             'application_deadline': (date.today() + timedelta(days=10)).isoformat(),
             'application_link': 'https://example.com/intern'
         }, follow=True)
 
         self.assertEqual(response.status_code, 200)
         self.assertTrue(JobListing.objects.filter(title='Backend Intern').exists())
+
         created_job = JobListing.objects.get(title='Backend Intern')
         self.assertFalse(created_job.is_verified)
 
@@ -77,9 +83,14 @@ class JobTests(TestCase):
         self.job.save()
 
         self.client.login(username='admin1', password='testpass123')
-        response = self.client.get(reverse('jobs:verify', args=[self.job.pk]), follow=True)
+
+        response = self.client.get(
+            reverse('jobs:verify', args=[self.job.pk]),
+            follow=True
+        )
 
         self.job.refresh_from_db()
+
         self.assertTrue(self.job.is_verified)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(
@@ -94,9 +105,14 @@ class JobTests(TestCase):
         self.job.save()
 
         self.client.login(username='student1', password='testpass123')
-        response = self.client.get(reverse('jobs:verify', args=[self.job.pk]), follow=True)
+
+        response = self.client.get(
+            reverse('jobs:verify', args=[self.job.pk]),
+            follow=True
+        )
 
         self.job.refresh_from_db()
+
         self.assertFalse(self.job.is_verified)
         self.assertContains(response, 'Access denied.')
 
@@ -104,10 +120,20 @@ class JobTests(TestCase):
         self.client.login(username='student1', password='testpass123')
 
         self.client.get(reverse('jobs:bookmark', args=[self.job.pk]))
-        self.assertTrue(JobBookmark.objects.filter(user=self.student, job=self.job).exists())
+        self.assertTrue(
+            JobBookmark.objects.filter(
+                user=self.student,
+                job=self.job
+            ).exists()
+        )
 
         self.client.get(reverse('jobs:bookmark', args=[self.job.pk]))
-        self.assertFalse(JobBookmark.objects.filter(user=self.student, job=self.job).exists())
+        self.assertFalse(
+            JobBookmark.objects.filter(
+                user=self.student,
+                job=self.job
+            ).exists()
+        )
 
     def test_job_apply_creates_application_and_notifications(self):
         self.client.login(username='student1', password='testpass123')
@@ -121,13 +147,20 @@ class JobTests(TestCase):
         }, follow=True)
 
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(JobApplication.objects.filter(job=self.job, applicant=self.student).exists())
+        self.assertTrue(
+            JobApplication.objects.filter(
+                job=self.job,
+                applicant=self.student
+            ).exists()
+        )
+
         self.assertTrue(
             Notification.objects.filter(
                 recipient=self.student,
                 title='Job Application Submitted'
             ).exists()
         )
+
         self.assertTrue(
             Notification.objects.filter(
                 recipient=self.poster,
@@ -147,7 +180,18 @@ class JobTests(TestCase):
         )
 
         self.client.login(username='student1', password='testpass123')
-        response = self.client.get(reverse('jobs:apply', args=[self.job.pk]), follow=True)
 
-        self.assertEqual(JobApplication.objects.filter(job=self.job, applicant=self.student).count(), 1)
+        response = self.client.get(
+            reverse('jobs:apply', args=[self.job.pk]),
+            follow=True
+        )
+
+        self.assertEqual(
+            JobApplication.objects.filter(
+                job=self.job,
+                applicant=self.student
+            ).count(),
+            1
+        )
+
         self.assertContains(response, 'already applied')

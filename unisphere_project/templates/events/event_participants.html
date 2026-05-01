@@ -23,11 +23,12 @@
                 <thead>
                     <tr>
                         <th>#</th>
-                        <th>Name</th>
-                        <th>ID</th>
+                        <th>Full Name</th>
+                        <th>University ID</th>
                         <th>Email</th>
+                        <th>Phone</th>
                         <th>Department</th>
-                        <th>Club</th>
+                        <th>Note</th>
                     </tr>
                 </thead>
 
@@ -35,24 +36,12 @@
                     {% for reg in participants %}
                     <tr>
                         <td>{{ forloop.counter }}</td>
-
-                        <td>
-                            {{ reg.user.get_full_name|default:reg.user.username }}
-                        </td>
-
-                        <td>{{ reg.user.university_id }}</td>
-
-                        <td>{{ reg.user.email }}</td>
-
-                        <td>{{ reg.user.department }}</td>
-
-                        <td>
-                            {% if reg.user.is_club_member %}
-                                {{ reg.user.get_club_display }}
-                            {% else %}
-                                -
-                            {% endif %}
-                        </td>
+                        <td>{{ reg.full_name|default:reg.user.get_full_name }}</td>
+                        <td>{{ reg.university_id|default:reg.user.university_id }}</td>
+                        <td>{{ reg.email|default:reg.user.email }}</td>
+                        <td>{{ reg.phone|default:"-" }}</td>
+                        <td>{{ reg.department|default:reg.user.department }}</td>
+                        <td>{{ reg.note|default:"-" }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>

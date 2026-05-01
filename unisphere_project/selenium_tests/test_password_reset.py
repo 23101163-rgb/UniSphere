@@ -5,7 +5,7 @@ import time
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, PROJECT_ROOT)
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "unilink.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "unisphere.settings")
 
 import django
 django.setup()
@@ -49,62 +49,38 @@ def wait_page_ready(driver, timeout=10):
     return wait
 
 
-from django.core.files.base import ContentFile
-from materials.models import StudyMaterial
-
 PASSWORD = "TestPass123@#"
 
-teacher = ensure_user(
-    username="selenium_material_teacher",
-    password=PASSWORD,
-    role="teacher",
-    email="selenium_material_teacher@uap-bd.edu",
-    first_name="Material",
-    last_name="Teacher",
-)
-
-student = ensure_user(
-    username="selenium_material_browser",
+ensure_user(
+    username="selenium_reset_user",
     password=PASSWORD,
     role="student",
-    email="selenium_material_browser@uap-bd.edu",
-    first_name="Material",
-    last_name="Browser",
+    email="selenium_reset_user@uap-bd.edu",
+    first_name="Reset",
+    last_name="User",
 )
-
-StudyMaterial.objects.filter(title="Selenium AI Notes").delete()
-
-material = StudyMaterial(
-    title="Selenium AI Notes",
-    description="Artificial Intelligence notes for Selenium browsing test.",
-    course_name="CSE101",
-    semester="1.1",
-    topic="AI Basics",
-    tags="AI, Selenium, Test",
-    uploaded_by=teacher,
-    is_approved=True,
-)
-material.file.save("selenium_ai_notes.txt", ContentFile(b"Selenium AI material content"), save=True)
 
 driver = get_driver()
 wait = WebDriverWait(driver, 10)
 
 try:
-    login(driver, "selenium_material_browser", PASSWORD)
+    driver.get(f"{BASE_URL}/accounts/password-reset/")
+    wait.until(EC.presence_of_element_located((By.NAME, "email")))
 
-    driver.get(f"{BASE_URL}/materials/semester/1.1/course/CSE101/?q=AI")
-    wait_page_ready(driver)
+    email_input = driver.find_element(By.NAME, "email")
+    email_input.clear()
+    email_input.send_keys("selenium_reset_user@uap-bd.edu")
 
-    assert "selenium ai notes" in driver.page_source.lower(), "Material search result did not show the created material"
+    driver.find_element(By.TAG_NAME, "form").submit()
 
-    driver.get(f"{BASE_URL}/materials/{material.pk}/")
+    wait.until(EC.url_contains("/accounts/password-reset/done/"))
     wait_page_ready(driver)
 
     page_text = driver.page_source.lower()
-    assert "selenium ai notes" in page_text, "Material detail page did not load"
-    assert "ai basics" in page_text or "artificial intelligence" in page_text, "Material detail content missing"
+    assert "reset" in page_text or "password" in page_text, "Password reset done page did not show expected text"
 
-    print("Material Browse/Search Test Passed ✅")
+    print("Password Reset Request Test Passed ✅")
 
 finally:
     driver.quit()
+

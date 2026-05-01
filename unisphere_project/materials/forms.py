@@ -26,7 +26,7 @@ class StudyMaterialForm(forms.ModelForm):
             }),
             'course_name': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Enter course name'
+                'placeholder': 'Enter course name, e.g. CSE101'
             }),
             'semester': forms.Select(attrs={
                 'class': 'form-select'
@@ -57,7 +57,7 @@ class StudyMaterialForm(forms.ModelForm):
         course_name = self.cleaned_data.get('course_name', '').strip()
         if not course_name:
             raise forms.ValidationError('Course name is required.')
-        return course_name
+        return course_name.upper()
 
     def clean_topic(self):
         topic = self.cleaned_data.get('topic', '').strip()

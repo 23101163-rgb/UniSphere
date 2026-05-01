@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}{{ thesis.title }}{% endblock %}
+{% block content %}
+<div class="col-md-8"><div class="card p-4">
+    <h3>{{ thesis.title }}</h3>
+    <p><strong>Authors:</strong> {{ thesis.authors }}</p>
+    <p><strong>Supervisor:</strong> {% if thesis.supervisor %}{{ thesis.supervisor.get_full_name }}{% else %}N/A{% endif %}</p>
+    <p><strong>Year:</strong> {{ thesis.year }} | <strong>Area:</strong> {{ thesis.research_area }}</p>
+    <h5>Abstract</h5><p>{{ thesis.abstract }}</p>
+    {% if thesis.document %}<a href="{{ thesis.document.url }}" class="btn btn-success"><i class="bi bi-download"></i> Download</a>{% endif %}
+</div></div>
+{% endblock %}

@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}Create Research Group{% endblock %}
+{% block content %}
+<div class="col-md-6"><div class="card p-4"><h3>Create Research Group</h3>
+    <form method="post">{% csrf_token %}{% for f in form %}<div class="mb-3"><label class="form-label">{{ f.label }}</label>{{ f }}</div>{% endfor %}
+    <button type="submit" class="btn btn-primary">Create</button></form></div></div>
+{% endblock %}

@@ -3,6 +3,7 @@ from django.urls import reverse
 from django.contrib.auth import get_user_model
 from datetime import date, time, timedelta
 
+from accounts.models import ClubMembership
 from .models import Event, EventRegistration
 from notifications.models import Notification
 
@@ -18,22 +19,39 @@ class EventTests(TestCase):
             university_id='910001',
             role='teacher'
         )
+
         self.student = User.objects.create_user(
             username='student2',
             email='student2@uap-bd.edu',
             password='testpass123',
             university_id='910002',
-            role='student'
+            role='student',
+            first_name='Test',
+            last_name='Student',
+            department='CSE',
         )
+
         self.club_student = User.objects.create_user(
             username='clubstudent',
             email='clubstudent@uap-bd.edu',
             password='testpass123',
             university_id='910003',
             role='student',
+            first_name='Club',
+            last_name='Student',
+            department='CSE',
             is_club_member=True,
+            is_club_verified=True,
             club_name='robotics_club',
             club_position='member'
+        )
+
+        ClubMembership.objects.create(
+            user=self.club_student,
+            club_name='robotics_club',
+            club_position='member',
+            is_verified=True,
+            authorized_to_post=True
         )
 
         self.event = Event.objects.create(
@@ -46,7 +64,8 @@ class EventTests(TestCase):
             time=time(10, 0),
             venue='Room 101',
             registration_link='https://example.com/event',
-            created_by=self.teacher
+            created_by=self.teacher,
+            is_approved=True
         )
 
     def test_event_list_loads(self):
@@ -56,6 +75,7 @@ class EventTests(TestCase):
 
     def test_teacher_can_create_event(self):
         self.client.login(username='teacher1', password='testpass123')
+
         response = self.client.post(reverse('events:create'), {
             'title': 'Career Talk',
             'description': 'A career session',
@@ -71,18 +91,33 @@ class EventTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(Event.objects.filter(title='Career Talk').exists())
 
-    def test_normal_student_cannot_create_event(self):
+    def test_normal_student_event_not_auto_approved(self):
         self.client.login(username='student2', password='testpass123')
-        response = self.client.get(reverse('events:create'), follow=True)
-        self.assertContains(response, 'Only teachers, admins, or club members can create events.')
+
+        response = self.client.post(reverse('events:create'), {
+            'title': 'Student Event',
+            'description': 'Student created event',
+            'organizer_category': 'non_club',
+            'club_name': '',
+            'event_type': 'seminar',
+            'date': (date.today() + timedelta(days=5)).isoformat(),
+            'time': '14:00',
+            'venue': 'Classroom',
+            'registration_link': ''
+        }, follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        event = Event.objects.get(title='Student Event')
+        self.assertFalse(event.is_approved)
 
     def test_club_member_student_can_create_club_event(self):
         self.client.login(username='clubstudent', password='testpass123')
+
         response = self.client.post(reverse('events:create'), {
             'title': 'Robotics Meetup',
             'description': 'Club meetup',
             'organizer_category': 'club',
-            'club_name': 'math_club',  # should be overridden
+            'club_name': 'robotics_club',
             'event_type': 'training',
             'date': (date.today() + timedelta(days=4)).isoformat(),
             'time': '12:00',
@@ -91,21 +126,39 @@ class EventTests(TestCase):
         }, follow=True)
 
         self.assertEqual(response.status_code, 200)
+        self.assertTrue(Event.objects.filter(title='Robotics Meetup').exists())
+
         event = Event.objects.get(title='Robotics Meetup')
         self.assertEqual(event.club_name, 'robotics_club')
+        self.assertTrue(event.is_approved)
 
     def test_student_register_event_creates_notification(self):
         self.client.login(username='student2', password='testpass123')
-        response = self.client.get(reverse('events:register', args=[self.event.pk]), follow=True)
+
+        response = self.client.post(reverse('events:register', args=[self.event.pk]), {
+            'full_name': 'Test Student',
+            'email': 'student2@uap-bd.edu',
+            'phone': '01700000000',
+            'department': 'CSE',
+            'university_id': '910002',
+            'note': '',
+        }, follow=True)
 
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(EventRegistration.objects.filter(event=self.event, user=self.student).exists())
+        self.assertTrue(
+            EventRegistration.objects.filter(
+                event=self.event,
+                user=self.student
+            ).exists()
+        )
+
         self.assertTrue(
             Notification.objects.filter(
                 recipient=self.student,
                 title='Event Registration Successful'
             ).exists()
         )
+
         self.assertTrue(
             Notification.objects.filter(
                 recipient=self.teacher,
@@ -114,16 +167,43 @@ class EventTests(TestCase):
         )
 
     def test_event_register_toggle_cancel(self):
-        EventRegistration.objects.create(event=self.event, user=self.student)
         self.client.login(username='student2', password='testpass123')
 
-        response = self.client.get(reverse('events:register', args=[self.event.pk]), follow=True)
+        self.client.post(reverse('events:register', args=[self.event.pk]), {
+            'full_name': 'Test Student',
+            'email': 'student2@uap-bd.edu',
+            'phone': '01700000000',
+            'department': 'CSE',
+            'university_id': '910002',
+            'note': '',
+        })
+
+        self.assertTrue(
+            EventRegistration.objects.filter(
+                event=self.event,
+                user=self.student
+            ).exists()
+        )
+
+        response = self.client.get(
+            reverse('events:register', args=[self.event.pk]),
+            follow=True
+        )
 
         self.assertEqual(response.status_code, 200)
-        self.assertFalse(EventRegistration.objects.filter(event=self.event, user=self.student).exists())
+        self.assertFalse(
+            EventRegistration.objects.filter(
+                event=self.event,
+                user=self.student
+            ).exists()
+        )
 
     def test_my_events_page(self):
-        EventRegistration.objects.create(event=self.event, user=self.student)
+        EventRegistration.objects.create(
+            event=self.event,
+            user=self.student
+        )
+
         self.client.login(username='student2', password='testpass123')
 
         response = self.client.get(reverse('events:my_events'))
@@ -131,9 +211,16 @@ class EventTests(TestCase):
         self.assertContains(response, 'AI Workshop')
 
     def test_event_participants_permission(self):
-        EventRegistration.objects.create(event=self.event, user=self.student)
+        EventRegistration.objects.create(
+            event=self.event,
+            user=self.student
+        )
 
         self.client.login(username='teacher1', password='testpass123')
-        response = self.client.get(reverse('events:participants', args=[self.event.pk]))
+
+        response = self.client.get(
+            reverse('events:participants', args=[self.event.pk])
+        )
+
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'student2')

@@ -5,7 +5,7 @@ import time
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, PROJECT_ROOT)
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "unilink.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "unisphere.settings")
 
 import django
 django.setup()
@@ -181,3 +181,4 @@ finally:
     driver.quit()
     if os.path.exists(paper_file_path):
         os.remove(paper_file_path)
+

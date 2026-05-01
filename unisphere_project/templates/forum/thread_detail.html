@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block title %}{{ thread.title }}{% endblock %}
+{% block content %}
+<div class="col-md-8 mx-auto">
+
+    <!-- ===== POST CARD ===== -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <!-- Author Info -->
+            <div class="d-flex align-items-center mb-3">
+                {% if thread.author.profile_picture %}
+                <img src="{{ thread.author.profile_picture.url }}" class="rounded-circle me-2" width="45" height="45" style="object-fit:cover;">
+                {% else %}
+                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2" style="width:45px;height:45px;font-size:18px;">{{ thread.author.first_name|first }}</div>
+                {% endif %}
+                <div>
+                    <strong>{{ thread.author.get_full_name }}</strong>
+                    <span class="badge bg-secondary">{{ thread.author.get_role_display }}</span>
+                    <br><small class="text-muted">{{ thread.created_at|date:"d M Y, h:i A" }} · {{ thread.category.name }}</small>
+                </div>
+            </div>
+
+            <!-- Post Content -->
+            <h5 class="fw-bold">{{ thread.title }}</h5>
+            <p>{{ thread.content|linebreaks }}</p>
+        </div>
+
+        <!-- Post Image -->
+        {% if thread.image %}
+        <img src="{{ thread.image.url }}" class="w-100" style="max-height:500px; object-fit:cover;">
+        {% endif %}
+
+        <!-- Actions Bar -->
+        <div class="card-body pt-2 pb-2 border-top">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <a href="{% url 'forum:upvote' thread.pk %}" class="text-decoration-none me-3"><i class="bi bi-heart"></i> {{ thread.upvote_count }} Likes</a>
+                    <span class="text-muted me-3"><i class="bi bi-chat"></i> {{ thread.reply_count }} Comments</span>
+                    <span class="text-muted"><i class="bi bi-eye"></i> {{ thread.views_count }} Views</span>
+                </div>
+                <a href="{% url 'forum:flag' 'thread' thread.pk %}" class="text-danger text-decoration-none"><i class="bi bi-flag"></i></a>
+{% if thread.author == request.user %}
+<a href="{% url 'forum:thread_edit' thread.pk %}" class="text-decoration-none ms-2"><i class="bi bi-pencil"></i></a>
+<a href="{% url 'forum:thread_delete' thread.pk %}" class="text-danger text-decoration-none ms-2"><i class="bi bi-trash"></i></a>
+{% endif %}cd
+            </div>
+        </div>
+
+        <!-- Comment Input -->
+        <div class="card-body border-top">
+            <form method="post">
+                {% csrf_token %}
+                <div class="d-flex">
+                    <input type="text" name="content" class="form-control form-control-sm me-2" placeholder="Write a comment..." required>
+                    <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-send"></i></button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ===== COMMENTS SECTION ===== -->
+    <h6 class="mb-3"><i class="bi bi-chat-left-text"></i> Comments ({{ thread.reply_count }})</h6>
+
+    {% for comment in comments %}
+    <!-- Top-level Comment -->
+    <div class="card mb-2">
+        <div class="card-body py-2">
+            <div class="d-flex">
+                {% if comment.author.profile_picture %}
+                <img src="{{ comment.author.profile_picture.url }}" class="rounded-circle me-2" width="32" height="32" style="object-fit:cover;">
+                {% else %}
+                <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-2" style="width:32px;height:32px;font-size:13px;">{{ comment.author.first_name|first }}</div>
+                {% endif %}
+                <div class="flex-grow-1">
+                    <strong class="small">{{ comment.author.get_full_name }}</strong>
+                    <span class="badge bg-light text-dark small">{{ comment.author.get_role_display }}</span>
+                    <small class="text-muted ms-1">· {{ comment.created_at|timesince }} ago</small>
+                    <p class="mb-1 mt-1">{{ comment.content }}</p>
+                    <small>
+                        <a href="{% url 'forum:upvote_reply' comment.pk %}" class="text-decoration-none me-2"><i class="bi bi-heart"></i> {{ comment.upvote_count }}</a>
+                        <a href="javascript:void(0)" onclick="toggleReplyForm({{ comment.pk }})" class="text-decoration-none me-2"><i class="bi bi-reply"></i> Reply</a>
+                        <a href="{% url 'forum:flag' 'reply' comment.pk %}" class="text-danger text-decoration-none"><i class="bi bi-flag"></i></a>
+                    </small>
+
+                    <!-- Inline Reply Form (hidden by default) -->
+                    <div id="reply-form-{{ comment.pk }}" class="mt-2" style="display:none;">
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="parent_id" value="{{ comment.pk }}">
+                            <div class="d-flex">
+                                <input type="text" name="content" class="form-control form-control-sm me-2" placeholder="Reply to {{ comment.author.first_name }}..." required>
+                                <button type="submit" class="btn btn-sm btn-outline-primary"><i class="bi bi-send"></i></button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Nested Replies (children) -->
+                    {% for child in comment.children.all %}
+                    {% if not child.is_flagged %}
+                    <div class="d-flex mt-2 ps-3" style="border-left: 2px solid #dee2e6;">
+                        {% if child.author.profile_picture %}
+                        <img src="{{ child.author.profile_picture.url }}" class="rounded-circle me-2" width="26" height="26" style="object-fit:cover;">
+                        {% else %}
+                        <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-2" style="width:26px;height:26px;font-size:11px;">{{ child.author.first_name|first }}</div>
+                        {% endif %}
+                        <div>
+                            <strong class="small">{{ child.author.get_full_name }}</strong>
+                            <small class="text-muted">· {{ child.created_at|timesince }} ago</small>
+                            <p class="mb-0 mt-1 small">{{ child.content }}</p>
+                            <small>
+                                <a href="{% url 'forum:upvote_reply' child.pk %}" class="text-decoration-none"><i class="bi bi-heart"></i> {{ child.upvote_count }}</a>
+                            </small>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <p class="text-muted text-center">No comments yet. Be the first!</p>
+    {% endfor %}
+
+    <a href="{% url 'forum:home' %}" class="btn btn-outline-secondary btn-sm mt-3"><i class="bi bi-arrow-left"></i> Back to Feed</a>
+</div>
+
+<script>
+function toggleReplyForm(id) {
+    const form = document.getElementById('reply-form-' + id);
+    document.querySelectorAll('[id^="reply-form-"]').forEach(f => {
+        if (f.id !== 'reply-form-' + id) f.style.display = 'none';
+    });
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    if (form.style.display === 'block') form.querySelector('input[name="content"]').focus();
+}
+</script>
+{% endblock %}

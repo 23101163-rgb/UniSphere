@@ -1,4 +1,4 @@
-from common import get_driver, BASE_URL
+from common import get_driver, login, BASE_URL
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait, Select
 from selenium.webdriver.support import expected_conditions as EC
@@ -7,19 +7,8 @@ from selenium.common.exceptions import ElementClickInterceptedException, Timeout
 driver = get_driver()
 
 try:
-    # Step 1: Login (teacher/admin required)
-    driver.get(f"{BASE_URL}/accounts/login/")
-
-    WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.NAME, "username"))
-    )
-
-    driver.find_element(By.NAME, "username").clear()
-    driver.find_element(By.NAME, "username").send_keys("Baivab")
-    driver.find_element(By.NAME, "password").clear()
-    driver.find_element(By.NAME, "password").send_keys("amibaivab123@#")
-
-    driver.find_element(By.XPATH, "//button[@type='submit']").click()
+    # Step 1: Login as teacher
+    login(driver, "Baivab", "amibaivab123@#")
 
     WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.TAG_NAME, "body"))
@@ -47,11 +36,16 @@ try:
     Select(driver.find_element(By.NAME, "organizer_category")).select_by_value("non_club")
     Select(driver.find_element(By.NAME, "event_type")).select_by_value("workshop")
 
-    driver.find_element(By.NAME, "date").clear()
-    driver.find_element(By.NAME, "date").send_keys("2026-12-30")
+    # FIX: Use JavaScript to set date (type='date' input doesn't accept send_keys reliably)
+    date_input = driver.find_element(By.NAME, "date")
+    driver.execute_script("arguments[0].value = '2026-12-30';", date_input)
+    # Trigger change event so Django form recognizes the value
+    driver.execute_script("arguments[0].dispatchEvent(new Event('change', {bubbles: true}));", date_input)
 
-    driver.find_element(By.NAME, "time").clear()
-    driver.find_element(By.NAME, "time").send_keys("10:30")
+    # FIX: Use JavaScript to set time (type='time' input)
+    time_input = driver.find_element(By.NAME, "time")
+    driver.execute_script("arguments[0].value = '10:30';", time_input)
+    driver.execute_script("arguments[0].dispatchEvent(new Event('change', {bubbles: true}));", time_input)
 
     driver.find_element(By.NAME, "venue").clear()
     driver.find_element(By.NAME, "venue").send_keys("UAP Lab")

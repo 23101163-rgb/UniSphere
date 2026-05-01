@@ -4,7 +4,7 @@
 {% block content %}
 <div class="container py-3">
 
-    <!-- HEADER -->
+    <!-- 🔹 HEADER -->
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
         <div>
             <h3 class="fw-bold mb-1">
@@ -13,14 +13,12 @@
             <p class="text-muted mb-0">Explore club and non-club events</p>
         </div>
 
-        {% if user.role == 'teacher' or user.role == 'admin' or user.is_club_member %}
-        <a href="{% url 'events:create' %}" class="btn btn-primary btn-ripple">
-            <i class="bi bi-plus-circle me-1"></i> Create Event
-        </a>
-        {% endif %}
+        {% if request.user.role == 'teacher' or request.user.role == 'admin' or request.user.role == 'student' %}
+<a href="{% url 'events:create' %}" class="btn btn-primary">Create Event</a>
+{% endif %}
     </div>
 
-    <!-- CLUB EVENTS SECTION -->
+    <!-- 🔥 CLUB EVENTS SECTION -->
     <h5 class="fw-bold mb-3">
         <i class="bi bi-people-fill me-2 text-success"></i> Club Events
     </h5>
@@ -68,7 +66,7 @@
         {% endfor %}
     </div>
 
-    <!-- NON CLUB EVENTS -->
+    <!-- 🔥 NON CLUB EVENTS -->
     <h5 class="fw-bold mb-3">
         <i class="bi bi-globe me-2 text-warning"></i> Other Events
     </h5>
@@ -115,8 +113,7 @@
 
 </div>
 
-
-
+<!-- 🔥 OPTIONAL STYLE -->
 <style>
 .hover-card {
     transition: all 0.3s ease;

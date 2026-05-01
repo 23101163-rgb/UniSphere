@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}
+    {% if form.instance.pk and form.instance.status == 'revision' %}
+        Resubmit Research Paper
+    {% else %}
+        Submit Research Paper
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="col-md-6">
+    <div class="card p-4">
+        <h3>
+            {% if form.instance.pk and form.instance.status == 'revision' %}
+                Resubmit Research Paper
+            {% else %}
+                Submit Research Paper
+            {% endif %}
+        </h3>
+
+        <p>Group: <strong>{{ group.name }}</strong> | Topic: {{ group.research_topic }}</p>
+
+        {% if form.instance.pk and form.instance.status == 'revision' %}
+        <div class="alert alert-warning">
+            This paper was marked for revision. Please correct it and submit again for review.
+        </div>
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {% for f in form %}
+            <div class="mb-3">
+                <label class="form-label">{{ f.label }}</label>
+                {{ f }}
+                {% if f.errors %}
+                <div class="text-danger small">{{ f.errors }}</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+
+            <button type="submit" class="btn btn-primary">
+                {% if form.instance.pk and form.instance.status == 'revision' %}
+                    Resubmit for Review
+                {% else %}
+                    Submit for Review
+                {% endif %}
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

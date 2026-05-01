@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}Community Feed{% endblock %}
+{% block content %}
+<div class="row">
+    <!-- ===== LEFT SIDEBAR: Categories ===== -->
+    <div class="col-md-3 mb-3">
+        <div class="card p-3">
+            <h6 class="fw-bold mb-2"><i class="bi bi-grid"></i> Categories</h6>
+            {% for c in categories %}
+            <a href="{% url 'forum:category' c.slug %}" class="d-block py-1 text-decoration-none">
+                {{ c.name }} <span class="badge bg-light text-dark float-end">{{ c.threads.count }}</span>
+            </a>
+            {% endfor %}
+        </div>
+        <div class="mt-2">
+            <a href="{% url 'forum:search' %}" class="btn btn-outline-secondary btn-sm w-100"><i class="bi bi-search"></i> Search Posts</a>
+        </div>
+    </div>
+
+    <!-- ===== MAIN FEED ===== -->
+    <div class="col-md-9">
+
+        <!-- Create Post Card -->
+        <div class="card p-3 mb-3">
+            <h6 class="fw-bold"><i class="bi bi-pencil-square"></i> Create Post</h6>
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="text" name="title" class="form-control mb-2" placeholder="Post title..." required>
+                <textarea name="content" class="form-control mb-2" rows="3" placeholder="What's on your mind?" required></textarea>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <label class="btn btn-outline-secondary btn-sm mb-0">
+                            <i class="bi bi-image"></i> Photo
+                            <input type="file" name="image" accept="image/*" hidden onchange="document.getElementById('file-name').textContent = this.files[0]?.name || ''">
+                        </label>
+                        <small id="file-name" class="text-muted ms-2"></small>
+                    </div>
+                    <div>
+                        <select name="category" class="form-select form-select-sm d-inline-block" style="width:auto;" required>
+                            <option value="">Category</option>
+                            {% for c in categories %}
+                            <option value="{{ c.pk }}">{{ c.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="btn btn-primary btn-sm ms-1"><i class="bi bi-send"></i> Post</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Feed Posts -->
+        {% for t in recent_threads %}
+        <div class="card mb-3">
+            <!-- Post Header -->
+            <div class="card-body pb-2">
+                <div class="d-flex align-items-center mb-2">
+                    {% if t.author.profile_picture %}
+                    <img src="{{ t.author.profile_picture.url }}" class="rounded-circle me-2" width="40" height="40" style="object-fit:cover;">
+                    {% else %}
+                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2" style="width:40px;height:40px;font-size:16px;">{{ t.author.first_name|first }}</div>
+                    {% endif %}
+                    <div>
+                        <strong>{{ t.author.get_full_name }}</strong>
+                        <span class="badge bg-secondary ms-1">{{ t.author.get_role_display }}</span>
+                        <br><small class="text-muted">{{ t.created_at|timesince }} ago · {{ t.category.name }}</small>
+                    </div>
+                    {% if t.is_pinned %}<span class="ms-auto badge bg-danger"><i class="bi bi-pin"></i> Pinned</span>{% endif %}
+                </div>
+
+                <!-- Post Content -->
+                <h6 class="fw-bold mb-1">{{ t.title }}</h6>
+                <p class="mb-2">{{ t.content|truncatewords:50|linebreaks }}</p>
+            </div>
+
+            <!-- Post Image -->
+            {% if t.image %}
+            <img src="{{ t.image.url }}" class="w-100" style="max-height:400px; object-fit:cover;">
+            {% endif %}
+
+            <!-- Post Actions -->
+            <div class="card-body pt-2">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <a href="{% url 'forum:upvote' t.pk %}?next=feed" class="text-decoration-none me-3">
+                            <i class="bi bi-heart"></i> {{ t.upvote_count }} Likes
+                        </a>
+                        <a href="{% url 'forum:thread_detail' t.pk %}" class="text-decoration-none me-3">
+                            <i class="bi bi-chat"></i> {{ t.reply_count }} Comments
+                        </a>
+                        <span class="text-muted"><i class="bi bi-eye"></i> {{ t.views_count }}</span>
+                    </div>
+                    <a href="{% url 'forum:thread_detail' t.pk %}" class="btn btn-sm btn-outline-primary">View Post</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="text-center text-muted py-5">
+            <i class="bi bi-chat-dots" style="font-size:48px;"></i>
+            <p class="mt-2">No posts yet. Be the first to share something!</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

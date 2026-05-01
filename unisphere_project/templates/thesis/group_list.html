@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Research Groups{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3><i class="bi bi-diagram-3"></i> Research Groups</h3>
+    <a href="{% url 'thesis:group_create' %}" class="btn btn-primary">Create Group</a>
+</div>
+<div class="row">{% for g in groups %}<div class="col-md-4 mb-3"><div class="card p-3">
+    <h5>{{ g.name }}</h5><p class="text-muted small">{{ g.research_area }}</p><p class="small">{{ g.description|truncatewords:20 }}</p>
+    <p class="small"><strong>Members:</strong> {{ g.members.count }} | <strong>Created by:</strong> {{ g.created_by.get_full_name }}</p>
+    {% if g.mentor %}<p class="small"><strong>Mentor:</strong> {{ g.mentor.get_full_name }}</p>{% endif %}
+    {% if request.user not in g.members.all %}<a href="{% url 'thesis:group_join' g.pk %}" class="btn btn-sm btn-primary">Join</a>{% else %}<span class="badge bg-success">Member</span>{% endif %}
+</div></div>{% empty %}<p class="text-muted">No research groups yet.</p>{% endfor %}</div>
+{% endblock %}

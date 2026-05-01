@@ -3,208 +3,407 @@
 
 {% block content %}
 <div class="dashboard-bg">
-    <div class="page-shell">
 
-        <div class="hero-panel mb-4">
-            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
-                <div>
-                    <h2 class="fw-bold mb-2">
-                        Welcome, {{ user.get_full_name }} 👋
-                    </h2>
+    <!-- ═══ HERO PANEL ═══ -->
+    <div class="hero-panel mb-4 stagger-1">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+                <h2 class="fw-bold mb-2" style="color:var(--text-primary); font-family:var(--font-display);">
+                    Welcome back, {{ user.get_full_name }} <span style="display:inline-block; animation: wave 2s ease-in-out infinite;">👋</span>
+                </h2>
+                <p class="mb-1" style="color:var(--text-secondary);">
+                    Here's what's happening in your UniSphere today
+                </p>
 
-                    <p class="text-muted mb-1">
-                        Here's what's happening in your UniSphere today 🚀
-                    </p>
-
-                    <p class="text-muted mb-1">
-                        Role:
-                        <span class="badge bg-primary">{{ user.get_role_display }}</span>
-                        | ID: {{ user.university_id }}
-                    </p>
+                <div class="d-flex flex-wrap gap-2 mt-2">
+                    <span class="badge bg-primary">{{ user.get_role_display }}</span>
+                    <span class="badge bg-dark" style="font-family:var(--font-mono);">ID: {{ user.university_id }}</span>
 
                     {% if user.is_club_member %}
-                    <div class="d-flex flex-wrap gap-2 mt-2">
-                        <span class="badge bg-success">
-                            <i class="bi bi-people-fill me-1"></i> Club Member
-                        </span>
+                        {% for membership in user.club_memberships.all %}
+                            {% if membership.is_verified %}
+                                <span class="badge bg-success">
+                                    <i class="bi bi-patch-check-fill me-1"></i>Club Verified
+                                </span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark">
+                                    <i class="bi bi-hourglass-split me-1"></i>Club Pending
+                                </span>
+                            {% endif %}
 
-                        {% if user.club_name %}
-                        <span class="badge bg-primary">
-                            {{ user.get_club_display }}
-                        </span>
-                        {% endif %}
+                            <span class="badge bg-info">
+                                {{ membership.get_club_name_display }}
+                            </span>
 
-                        {% if user.club_position %}
-                        <span class="badge bg-dark">
-                            {{ user.get_club_position_display }}
-                        </span>
-                        {% endif %}
-                    </div>
+                            {% if membership.club_position %}
+                                <span class="badge bg-dark">
+                                    {{ membership.get_club_position_display }}
+                                </span>
+                            {% endif %}
+                        {% empty %}
+                            {% if user.is_club_verified %}
+                                <span class="badge bg-success">
+                                    <i class="bi bi-patch-check-fill me-1"></i>Verified Club Member
+                                </span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark">
+                                    <i class="bi bi-hourglass-split me-1"></i>Club Pending
+                                </span>
+                            {% endif %}
+
+                            {% if user.club_name %}
+                                <span class="badge bg-info">{{ user.get_club_display }}</span>
+                            {% endif %}
+
+                            {% if user.club_position %}
+                                <span class="badge bg-dark">{{ user.get_club_position_display }}</span>
+                            {% endif %}
+                        {% endfor %}
                     {% endif %}
                 </div>
+            </div>
 
-                <div class="d-flex flex-wrap gap-2">
-                    <span class="modern-chip"><i class="bi bi-person-badge"></i> {{ user.department }}</span>
-                    <span class="modern-chip"><i class="bi bi-envelope"></i> {{ user.email }}</span>
-                </div>
+            <div class="d-flex flex-wrap gap-2">
+                <span class="modern-chip"><i class="bi bi-building"></i> {{ user.department }}</span>
+                <span class="modern-chip"><i class="bi bi-envelope"></i> {{ user.email }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ STAT CARDS ═══ -->
+    <div class="row g-3">
+        <div class="col-md-3 stagger-1">
+            <div class="card stat-card purple p-4 h-100 hover-lift glass-card">
+                <div class="stat-icon"><i class="bi bi-journal-text"></i></div>
+                <p style="color:var(--text-dim); font-family:var(--font-mono); font-size:0.7rem; letter-spacing:1px; text-transform:uppercase; margin-bottom:8px;">Materials</p>
+                <h2 class="fw-bold mb-1" style="font-family:var(--font-display); color:var(--text-primary);">
+                    <span class="counter" data-target="{{ user.materials.count }}">0</span>
+                </h2>
+                <a href="{% url 'materials:semesters' %}" style="color:var(--accent-bright); font-size:0.82rem; text-decoration:none;">
+                    Browse <i class="bi bi-arrow-right" style="font-size:0.75rem;"></i>
+                </a>
             </div>
         </div>
 
-        <div class="row mt-2 g-3">
-
-            <div class="col-md-3">
-                <div class="card stat-card blue p-4 h-100 hover-lift glass-card position-relative">
-                    <div style="position:absolute; right:15px; top:10px; font-size:2rem; opacity:0.08;">
-                        <i class="bi bi-journal-text"></i>
-                    </div>
-                    <h6 class="text-muted mb-2">Study Materials</h6>
-                    <h3 class="fw-bold mb-2">{{ user.materials.count }}</h3>
-                    <a href="{% url 'materials:semesters' %}" class="small text-decoration-none">Browse →</a>
-                </div>
+        <div class="col-md-3 stagger-2">
+            <div class="card stat-card emerald p-4 h-100 hover-lift glass-card">
+                <div class="stat-icon"><i class="bi bi-chat-dots"></i></div>
+                <p style="color:var(--text-dim); font-family:var(--font-mono); font-size:0.7rem; letter-spacing:1px; text-transform:uppercase; margin-bottom:8px;">Posts</p>
+                <h2 class="fw-bold mb-1" style="font-family:var(--font-display); color:var(--text-primary);">
+                    <span class="counter" data-target="{{ user.threads.count }}">0</span>
+                </h2>
+                <a href="{% url 'forum:home' %}" style="color:var(--emerald); font-size:0.82rem; text-decoration:none;">
+                    View feed <i class="bi bi-arrow-right" style="font-size:0.75rem;"></i>
+                </a>
             </div>
-
-            <div class="col-md-3">
-                <div class="card stat-card green p-4 h-100 hover-lift glass-card position-relative">
-                    <div style="position:absolute; right:15px; top:10px; font-size:2rem; opacity:0.08;">
-                        <i class="bi bi-chat-dots"></i>
-                    </div>
-                    <h6 class="text-muted mb-2">Forum Threads</h6>
-                    <h3 class="fw-bold mb-2">{{ user.threads.count }}</h3>
-                    <a href="{% url 'forum:home' %}" class="small text-decoration-none">Go to forum →</a>
-                </div>
-            </div>
-
-            <div class="col-md-3">
-                <div class="card stat-card orange p-4 h-100 hover-lift glass-card position-relative">
-                    <div style="position:absolute; right:15px; top:10px; font-size:2rem; opacity:0.08;">
-                        <i class="bi bi-briefcase"></i>
-                    </div>
-                    <h6 class="text-muted mb-2">Job Bookmarks</h6>
-                    <h3 class="fw-bold mb-2">{{ user.job_bookmarks.count }}</h3>
-                    <a href="{% url 'jobs:bookmarks' %}" class="small text-decoration-none">View →</a>
-                </div>
-            </div>
-
-            <div class="col-md-3">
-                <div class="card stat-card red p-4 h-100 hover-lift glass-card position-relative">
-                    <div style="position:absolute; right:15px; top:10px; font-size:2rem; opacity:0.08;">
-                        <i class="bi bi-bell"></i>
-                    </div>
-                    <h6 class="text-muted mb-2">Notifications</h6>
-                    <h3 class="fw-bold mb-2">{{ unread_count }}</h3>
-                    <a href="{% url 'notifications:list' %}" class="small text-decoration-none">View all →</a>
-                </div>
-            </div>
-
         </div>
 
-        <div class="row mt-4 g-3">
+        <div class="col-md-3 stagger-3">
+            <div class="card stat-card amber p-4 h-100 hover-lift glass-card">
+                <div class="stat-icon"><i class="bi bi-briefcase"></i></div>
+                <p style="color:var(--text-dim); font-family:var(--font-mono); font-size:0.7rem; letter-spacing:1px; text-transform:uppercase; margin-bottom:8px;">Bookmarks</p>
+                <h2 class="fw-bold mb-1" style="font-family:var(--font-display); color:var(--text-primary);">
+                    <span class="counter" data-target="{{ user.job_bookmarks.count }}">0</span>
+                </h2>
+                <a href="{% url 'jobs:bookmarks' %}" style="color:var(--amber); font-size:0.82rem; text-decoration:none;">
+                    View <i class="bi bi-arrow-right" style="font-size:0.75rem;"></i>
+                </a>
+            </div>
+        </div>
 
-            <div class="col-lg-7">
-                <div class="card p-4 h-100 glass-card">
-                    <div class="d-flex align-items-center justify-content-between mb-3">
-                        <div>
-                            <h5 class="section-title mb-1">Quick Actions</h5>
-                            <p class="section-subtitle small">Access frequently used features instantly</p>
-                        </div>
-                        <span class="modern-chip"><i class="bi bi-lightning-charge"></i> Shortcuts</span>
+        <div class="col-md-3 stagger-4">
+            <div class="card stat-card rose p-4 h-100 hover-lift glass-card">
+                <div class="stat-icon"><i class="bi bi-bell"></i></div>
+                <p style="color:var(--text-dim); font-family:var(--font-mono); font-size:0.7rem; letter-spacing:1px; text-transform:uppercase; margin-bottom:8px;">Unread</p>
+                <h2 class="fw-bold mb-1" style="font-family:var(--font-display); color:var(--text-primary);">
+                    <span class="counter" data-target="{{ unread_count }}">0</span>
+                </h2>
+                <a href="{% url 'notifications:list' %}" style="color:var(--rose); font-size:0.82rem; text-decoration:none;">
+                    View all <i class="bi bi-arrow-right" style="font-size:0.75rem;"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ QUICK ACTIONS + PROFILE ═══ -->
+    <div class="row mt-4 g-3">
+        <div class="col-lg-7">
+            <div class="card p-4 h-100 glass-card" style="animation: fadeSlideUp .5s .25s both;">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div>
+                        <h5 class="section-title mb-1">Quick Actions</h5>
+                        <p class="section-subtitle small">Jump to frequently used features</p>
+                    </div>
+                    <span class="modern-chip"><i class="bi bi-lightning-charge"></i> Shortcuts</span>
+                </div>
+
+                <div class="row g-2 mt-1">
+                    <div class="col-md-6">
+                        <a href="{% url 'materials:create' %}" class="btn btn-primary w-100 btn-ripple d-flex align-items-center justify-content-center gap-2">
+                            <i class="bi bi-cloud-arrow-up"></i> Upload Material
+                        </a>
                     </div>
 
-                    <div class="row g-2 mt-2">
+                    <div class="col-md-6">
+                        <a href="{% url 'forum:thread_create' %}" class="btn btn-success w-100 btn-ripple d-flex align-items-center justify-content-center gap-2">
+                            <i class="bi bi-plus-circle"></i> New Post
+                        </a>
+                    </div>
 
-                        <div class="col-md-6">
-                            <a href="{% url 'materials:create' %}" class="btn btn-primary w-100 btn-ripple">
-                                <i class="bi bi-upload"></i> Upload Material
-                            </a>
-                        </div>
+                    <div class="col-md-6">
+                        <a href="{% url 'jobs:create' %}" class="btn btn-dark w-100 btn-ripple d-flex align-items-center justify-content-center gap-2">
+                            <i class="bi bi-briefcase"></i> Post Job
+                        </a>
+                    </div>
 
+                    {% if user.role == 'teacher' or user.role == 'admin' or user.role == 'student' %}
                         <div class="col-md-6">
-                            <a href="{% url 'forum:thread_create' %}" class="btn btn-success w-100 btn-ripple">
-                                <i class="bi bi-plus-circle"></i> New Thread
-                            </a>
-                        </div>
-
-                        <div class="col-md-6">
-                            <a href="{% url 'jobs:create' %}" class="btn btn-dark w-100 btn-ripple">
-                                <i class="bi bi-briefcase"></i> Post Job
-                            </a>
-                        </div>
-
-                        {% if user.role == 'teacher' or user.role == 'admin' or user.is_club_member %}
-                        <div class="col-md-6">
-                            <a href="{% url 'events:create' %}" class="btn btn-info w-100 btn-ripple">
+                            <a href="{% url 'events:create' %}" class="btn btn-info w-100 btn-ripple d-flex align-items-center justify-content-center gap-2">
                                 <i class="bi bi-calendar-plus"></i> Create Event
                             </a>
                         </div>
-                        {% endif %}
+                    {% endif %}
 
-                        <div class="col-md-6">
-                            <a href="{% url 'events:my_events' %}" class="btn btn-success w-100 btn-ripple">
-                                <i class="bi bi-calendar-check"></i> My Events
-                            </a>
-                        </div>
-
+                    <div class="col-md-6">
+                        <a href="{% url 'events:my_events' %}" class="btn btn-outline-primary w-100 btn-ripple d-flex align-items-center justify-content-center gap-2">
+                            <i class="bi bi-calendar-check"></i> My Events
+                        </a>
                     </div>
 
-                    <hr class="my-4">
-
-                    <p class="text-muted mb-0">
-                        Use these shortcuts to quickly navigate through UniSphere features.
-                    </p>
+                    <div class="col-md-6">
+                        <a href="{% url 'complaints:my_complaints' %}" class="btn btn-outline-secondary w-100 btn-ripple d-flex align-items-center justify-content-center gap-2">
+                            <i class="bi bi-clipboard2-pulse"></i> My Complaints
+                        </a>
+                    </div>
                 </div>
             </div>
+        </div>
 
-            <div class="col-lg-5">
-                <div class="card p-4 h-100 glass-card profile-mini-card">
-                    <div class="d-flex align-items-center gap-3 mb-3">
-                        {% if user.profile_picture %}
-                            <img src="{{ user.profile_picture.url }}"
-                                 alt="Profile Picture"
-                                 class="rounded-circle"
-                                 style="width:72px; height:72px; object-fit:cover;">
-                        {% else %}
-                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
-                                 style="width:72px; height:72px; font-size:1.4rem; font-weight:700;">
-                                {{ user.first_name.0 }}{{ user.last_name.0 }}
-                            </div>
-                        {% endif %}
-
-                        <div>
-                            <h5 class="fw-bold mb-1">Your Profile</h5>
-                            <p class="text-muted mb-0">Account overview</p>
+        <div class="col-lg-5">
+            <div class="card p-4 h-100 glass-card profile-mini-card" style="animation: fadeSlideUp .5s .3s both;">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    {% if user.profile_picture %}
+                        <img src="{{ user.profile_picture.url }}" class="rounded-circle"
+                             style="width:60px; height:60px; object-fit:cover; border:2px solid var(--border-subtle); box-shadow: 0 0 16px rgba(124,92,252,0.12);">
+                    {% else %}
+                        <div class="rounded-circle d-flex align-items-center justify-content-center"
+                             style="width:60px; height:60px; font-size:1.2rem; font-weight:700; color:white; font-family:var(--font-display);
+                             background:linear-gradient(135deg, var(--accent), var(--cyan));
+                             box-shadow: 0 0 20px rgba(124,92,252,0.2);">
+                            {{ user.first_name.0 }}{{ user.last_name.0 }}
                         </div>
-                    </div>
-
-                    <p class="mb-1"><strong>{{ user.get_full_name }}</strong></p>
-                    <p class="text-muted mb-2">{{ user.email }} | {{ user.department }}</p>
-
-                    {% if user.bio %}
-                        <p class="small text-muted mb-3">{{ user.bio|truncatewords:18 }}</p>
                     {% endif %}
+
+                    <div>
+                        <h5 class="fw-bold mb-0" style="font-family:var(--font-display); color:var(--text-primary); font-size:1.05rem;">{{ user.get_full_name }}</h5>
+                        <small style="color:var(--text-dim); font-family:var(--font-mono); font-size:0.72rem;">{{ user.email }}</small>
+                    </div>
+                </div>
+
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                    <span class="modern-chip" style="font-size:0.72rem;">
+                        <i class="bi bi-building"></i> {{ user.department }}
+                    </span>
 
                     {% if user.is_club_member %}
-                    <div class="mb-3">
-                        <span class="badge bg-success me-1">Club</span>
-                        {% if user.club_name %}
-                            <span class="badge bg-primary">{{ user.get_club_display }}</span>
-                        {% endif %}
-                    </div>
+                        {% for membership in user.club_memberships.all %}
+                            <span class="modern-chip"
+                                  style="font-size:0.72rem; background:var(--cyan-glow); color:var(--cyan); border-color:rgba(56,189,248,0.15);">
+                                <i class="bi bi-people"></i> {{ membership.get_club_name_display }}
+                            </span>
+
+                            {% if membership.club_position %}
+                                <span class="modern-chip"
+                                      style="font-size:0.72rem;">
+                                    <i class="bi bi-person-badge"></i> {{ membership.get_club_position_display }}
+                                </span>
+                            {% endif %}
+
+                            {% if membership.is_verified %}
+                                <span class="modern-chip"
+                                      style="font-size:0.72rem; background:var(--emerald-glow); color:var(--emerald); border-color:rgba(52,211,153,0.15);">
+                                    <i class="bi bi-patch-check-fill"></i> Verified
+                                </span>
+                            {% else %}
+                                <span class="modern-chip"
+                                      style="font-size:0.72rem; background:rgba(251,191,36,0.12); color:var(--amber); border-color:rgba(251,191,36,0.18);">
+                                    <i class="bi bi-hourglass-split"></i> Pending
+                                </span>
+                            {% endif %}
+                        {% empty %}
+                            {% if user.club_name %}
+                                <span class="modern-chip"
+                                      style="font-size:0.72rem; background:var(--emerald-glow); color:var(--emerald); border-color:rgba(52,211,153,0.15);">
+                                    <i class="bi bi-people"></i> {{ user.get_club_display }}
+                                </span>
+                            {% endif %}
+                        {% endfor %}
                     {% endif %}
-
-                    <div class="mb-3">
-                        <span class="modern-chip">
-                            <i class="bi bi-clock"></i>
-                            Last login: {{ user.last_login|date:"M d, H:i" }}
-                        </span>
-                    </div>
-
-                    <a href="{% url 'accounts:profile_edit' %}" class="btn btn-outline-primary btn-sm btn-ripple">
-                        Edit Profile
-                    </a>
                 </div>
-            </div>
 
+                {% if user.bio %}
+                    <p class="small mb-3" style="color:var(--text-secondary); font-size:0.84rem;">{{ user.bio|truncatewords:20 }}</p>
+                {% endif %}
+
+                <div class="mb-3">
+                    <small style="color:var(--text-dim); font-family:var(--font-mono); font-size:0.7rem;">
+                        <i class="bi bi-clock"></i> Last login: {{ user.last_login|date:"M d, H:i" }}
+                    </small>
+                </div>
+
+                <a href="{% url 'accounts:profile_edit' %}" class="btn btn-outline-primary btn-sm btn-ripple" style="font-size:0.8rem;">
+                    <i class="bi bi-pencil-square"></i> Edit Profile
+                </a>
+            </div>
         </div>
     </div>
+
+    <!-- ═══ RESEARCH OVERVIEW ═══ -->
+    {% if user.role == 'student' or user.role == 'alumni' or user.role == 'teacher' %}
+    <div class="row mt-4 g-3">
+        {% if user.role == 'student' or user.role == 'alumni' %}
+        <div class="col-lg-12">
+            <div class="card p-4 glass-card" style="animation: fadeSlideUp .5s .35s both;">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div>
+                        <h5 class="section-title mb-1">Research Overview</h5>
+                        <p class="section-subtitle small">Your research activity summary</p>
+                    </div>
+                    <span class="modern-chip"><i class="bi bi-journal-richtext"></i> Research</span>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="card stat-card purple p-4 h-100 hover-lift glass-card">
+                            <div class="stat-icon"><i class="bi bi-journal-check"></i></div>
+                            <p style="color:var(--text-dim); font-family:var(--font-mono); font-size:0.7rem; letter-spacing:1px; text-transform:uppercase; margin-bottom:8px;">Published Papers</p>
+                            <h2 class="fw-bold mb-1" style="font-family:var(--font-display); color:var(--text-primary);">
+                                <span class="counter" data-target="{{ published_papers_count }}">0</span>
+                            </h2>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card stat-card emerald p-4 h-100 hover-lift glass-card">
+                            <div class="stat-icon"><i class="bi bi-people"></i></div>
+                            <p style="color:var(--text-dim); font-family:var(--font-mono); font-size:0.7rem; letter-spacing:1px; text-transform:uppercase; margin-bottom:8px;">Research Groups</p>
+                            <h2 class="fw-bold mb-1" style="font-family:var(--font-display); color:var(--text-primary);">
+                                <span class="counter" data-target="{{ user.rg_research_groups.count }}">0</span>
+                            </h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if user.role == 'teacher' %}
+        <div class="col-lg-12">
+            <div class="card p-4 glass-card" style="animation: fadeSlideUp .5s .35s both;">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div>
+                        <h5 class="section-title mb-1">Research Supervision Overview</h5>
+                        <p class="section-subtitle small">Only your supervised and co-supervised groups are shown here</p>
+                    </div>
+                    <span class="modern-chip"><i class="bi bi-mortarboard"></i> Supervision</span>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <div class="card stat-card purple p-4 h-100 hover-lift glass-card">
+                            <div class="stat-icon"><i class="bi bi-person-badge"></i></div>
+                            <p style="color:var(--text-dim); font-family:var(--font-mono); font-size:0.7rem; letter-spacing:1px; text-transform:uppercase; margin-bottom:8px;">Supervised Papers</p>
+                            <h2 class="fw-bold mb-1" style="font-family:var(--font-display); color:var(--text-primary);">
+                                <span class="counter" data-target="{{ supervised_papers_count }}">0</span>
+                            </h2>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card stat-card emerald p-4 h-100 hover-lift glass-card">
+                            <div class="stat-icon"><i class="bi bi-person-workspace"></i></div>
+                            <p style="color:var(--text-dim); font-family:var(--font-mono); font-size:0.7rem; letter-spacing:1px; text-transform:uppercase; margin-bottom:8px;">Co-Supervised Papers</p>
+                            <h2 class="fw-bold mb-1" style="font-family:var(--font-display); color:var(--text-primary);">
+                                <span class="counter" data-target="{{ co_supervised_papers_count }}">0</span>
+                            </h2>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="card p-3 h-100 glass-card">
+                            <h6 class="fw-bold mb-3"><i class="bi bi-diagram-3 me-2"></i>Supervising Groups</h6>
+                            {% for g in supervising_groups %}
+                                <div class="border rounded p-2 mb-2">
+                                    <div class="fw-semibold">{{ g.name }}</div>
+                                    <div class="small text-muted">{{ g.research_area }}</div>
+                                    <div class="small">Members: {{ g.member_count }}/4</div>
+                                    <a href="{% url 'research:group_detail' g.pk %}" class="btn btn-sm btn-outline-primary mt-2">View Details</a>
+                                </div>
+                            {% empty %}
+                                <p class="text-muted mb-0">No supervised groups yet.</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card p-3 h-100 glass-card">
+                            <h6 class="fw-bold mb-3"><i class="bi bi-people-fill me-2"></i>Co-Supervising Groups</h6>
+                            {% for g in co_supervising_groups %}
+                                <div class="border rounded p-2 mb-2">
+                                    <div class="fw-semibold">{{ g.name }}</div>
+                                    <div class="small text-muted">{{ g.research_area }}</div>
+                                    <div class="small">Members: {{ g.member_count }}/4</div>
+                                    <a href="{% url 'research:group_detail' g.pk %}" class="btn btn-sm btn-outline-primary mt-2">View Details</a>
+                                </div>
+                            {% empty %}
+                                <p class="text-muted mb-0">No co-supervised groups yet.</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
 </div>
+
+<!-- Animated counter script -->
+<style>
+@keyframes wave {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(20deg); }
+    75% { transform: rotate(-10deg); }
+}
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    document.querySelectorAll('.counter').forEach(el => {
+        const target = parseInt(el.getAttribute('data-target'));
+
+        if (target === 0) {
+            el.textContent = '0';
+            return;
+        }
+
+        const duration = 1200;
+        const step = Math.ceil(target / (duration / 30));
+        let current = 0;
+
+        const timer = setInterval(() => {
+            current += step;
+
+            if (current >= target) {
+                current = target;
+                clearInterval(timer);
+            }
+
+            el.textContent = current;
+        }, 30);
+    });
+});
+</script>
 {% endblock %}

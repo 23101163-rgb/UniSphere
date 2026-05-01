@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}{{ category.name }}{% endblock %}
+{% block content %}
+<div class="col-md-8 mx-auto">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h4>{{ category.name }}</h4>
+            <p class="text-muted mb-0">{{ category.description }}</p>
+        </div>
+        <a href="{% url 'forum:home' %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i> Feed</a>
+    </div>
+
+    {% for t in threads %}
+    <div class="card mb-3">
+        <div class="card-body pb-2">
+            <div class="d-flex align-items-center mb-2">
+                {% if t.author.profile_picture %}
+                <img src="{{ t.author.profile_picture.url }}" class="rounded-circle me-2" width="40" height="40" style="object-fit:cover;">
+                {% else %}
+                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2" style="width:40px;height:40px;font-size:16px;">{{ t.author.first_name|first }}</div>
+                {% endif %}
+                <div>
+                    <strong>{{ t.author.get_full_name }}</strong>
+                    <span class="badge bg-secondary">{{ t.author.get_role_display }}</span>
+                    <br><small class="text-muted">{{ t.created_at|timesince }} ago</small>
+                </div>
+            </div>
+            <h6 class="fw-bold">{{ t.title }}</h6>
+            <p>{{ t.content|truncatewords:40 }}</p>
+        </div>
+        {% if t.image %}
+        <img src="{{ t.image.url }}" class="w-100" style="max-height:350px; object-fit:cover;">
+        {% endif %}
+        <div class="card-body pt-2">
+            <a href="{% url 'forum:upvote' t.pk %}" class="text-decoration-none me-3"><i class="bi bi-heart"></i> {{ t.upvote_count }}</a>
+            <a href="{% url 'forum:thread_detail' t.pk %}" class="text-decoration-none me-3"><i class="bi bi-chat"></i> {{ t.reply_count }} Comments</a>
+            <a href="{% url 'forum:thread_detail' t.pk %}" class="btn btn-sm btn-outline-primary float-end">View</a>
+        </div>
+    </div>
+    {% empty %}
+    <p class="text-muted text-center">No posts in this category yet.</p>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -23,7 +23,10 @@ class EventTests(TestCase):
             email='student2@uap-bd.edu',
             password='testpass123',
             university_id='910002',
-            role='student'
+            role='student',
+            first_name='Test',
+            last_name='Student',
+            department='CSE',
         )
         self.club_student = User.objects.create_user(
             username='clubstudent',
@@ -46,7 +49,8 @@ class EventTests(TestCase):
             time=time(10, 0),
             venue='Room 101',
             registration_link='https://example.com/event',
-            created_by=self.teacher
+            created_by=self.teacher,
+            is_approved=True
         )
 
     def test_event_list_loads(self):
@@ -71,10 +75,24 @@ class EventTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(Event.objects.filter(title='Career Talk').exists())
 
-    def test_normal_student_cannot_create_event(self):
+    # FIXED: View allows all students to create, but normal student's event is NOT approved
+    def test_normal_student_event_not_auto_approved(self):
         self.client.login(username='student2', password='testpass123')
-        response = self.client.get(reverse('events:create'), follow=True)
-        self.assertContains(response, 'Only teachers, admins, or club members can create events.')
+        response = self.client.post(reverse('events:create'), {
+            'title': 'Student Event',
+            'description': 'Student created event',
+            'organizer_category': 'non_club',
+            'club_name': '',
+            'event_type': 'seminar',
+            'date': (date.today() + timedelta(days=5)).isoformat(),
+            'time': '14:00',
+            'venue': 'Classroom',
+            'registration_link': ''
+        }, follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        event = Event.objects.get(title='Student Event')
+        self.assertFalse(event.is_approved)
 
     def test_club_member_student_can_create_club_event(self):
         self.client.login(username='clubstudent', password='testpass123')
@@ -94,9 +112,17 @@ class EventTests(TestCase):
         event = Event.objects.get(title='Robotics Meetup')
         self.assertEqual(event.club_name, 'robotics_club')
 
+    # FIXED: Registration requires POST with form data
     def test_student_register_event_creates_notification(self):
         self.client.login(username='student2', password='testpass123')
-        response = self.client.get(reverse('events:register', args=[self.event.pk]), follow=True)
+        response = self.client.post(reverse('events:register', args=[self.event.pk]), {
+            'full_name': 'Test Student',
+            'email': 'student2@uap-bd.edu',
+            'phone': '01700000000',
+            'department': 'CSE',
+            'university_id': '910002',
+            'note': '',
+        }, follow=True)
 
         self.assertEqual(response.status_code, 200)
         self.assertTrue(EventRegistration.objects.filter(event=self.event, user=self.student).exists())
@@ -113,12 +139,22 @@ class EventTests(TestCase):
             ).exists()
         )
 
+    # FIXED: First register via POST, then cancel via GET
     def test_event_register_toggle_cancel(self):
-        EventRegistration.objects.create(event=self.event, user=self.student)
+        # Register first via POST
         self.client.login(username='student2', password='testpass123')
+        self.client.post(reverse('events:register', args=[self.event.pk]), {
+            'full_name': 'Test Student',
+            'email': 'student2@uap-bd.edu',
+            'phone': '01700000000',
+            'department': 'CSE',
+            'university_id': '910002',
+            'note': '',
+        })
+        self.assertTrue(EventRegistration.objects.filter(event=self.event, user=self.student).exists())
 
+        # Cancel via GET (view detects existing registration and deletes)
         response = self.client.get(reverse('events:register', args=[self.event.pk]), follow=True)
-
         self.assertEqual(response.status_code, 200)
         self.assertFalse(EventRegistration.objects.filter(event=self.event, user=self.student).exists())
 

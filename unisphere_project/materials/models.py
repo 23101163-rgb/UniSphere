@@ -32,6 +32,11 @@ class StudyMaterial(models.Model):
     def __str__(self):
         return self.title
 
+    def save(self, *args, **kwargs):
+        if self.course_name:
+            self.course_name = self.course_name.strip().upper()
+        super().save(*args, **kwargs)
+
     def average_rating(self):
         avg = self.ratings.aggregate(models.Avg('score'))['score__avg']
         return round(avg, 1) if avg is not None else 0

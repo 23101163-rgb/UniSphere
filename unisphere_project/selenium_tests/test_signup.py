@@ -19,16 +19,16 @@ try:
     username = f"user{int(time.time())}"
 
     driver.find_element(By.NAME, "username").send_keys(username)
-    driver.find_element(By.NAME, "first_name").send_keys("Test")
-    driver.find_element(By.NAME, "last_name").send_keys("User")
+    driver.find_element(By.NAME, "first_name").send_keys("Adika")
+    driver.find_element(By.NAME, "last_name").send_keys("Sulatana")
 
     # 🔥 must be varsity email
     driver.find_element(By.NAME, "email").send_keys(f"{username}@uap-bd.edu")
 
     driver.find_element(By.NAME, "university_id").send_keys(f"UAP{int(time.time())}")
 
-    driver.find_element(By.NAME, "password1").send_keys("12345678")
-    driver.find_element(By.NAME, "password2").send_keys("12345678")
+    driver.find_element(By.NAME, "password1").send_keys("amiadika123@#")
+    driver.find_element(By.NAME, "password2").send_keys("amiadika123@#")
 
     # role select (if exists)
     try:

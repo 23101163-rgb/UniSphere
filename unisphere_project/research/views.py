@@ -3,6 +3,9 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
 from django.utils import timezone
+from django.conf import settings
+from django.core.mail import send_mail
+from django.urls import reverse
 from notifications.utils import create_notification
 
 from .models import (
@@ -342,11 +345,36 @@ def send_group_invitation(request, pk):
                 messages.info(request, 'A pending invitation already exists for this user.')
                 return redirect('research:group_detail', pk=pk)
 
-            ResearchGroupInvitation.objects.create(
+            invitation = ResearchGroupInvitation.objects.create(
                 group=group,
                 invited_user=invited_user,
                 invited_by=request.user
             )
+
+            accept_url = request.build_absolute_uri(
+                reverse('research:accept_group_invitation', args=[invitation.pk])
+            )
+
+            email_sent = False
+            try:
+                send_mail(
+                    subject=f'Research Group Invitation: {group.name}',
+                    message=(
+                        f'Hello {invited_user.get_full_name() or invited_user.username},\n\n'
+                        f'{request.user.get_full_name() or request.user.username} invited you to join the closed research group "{group.name}".\n\n'
+                        f'Accept invitation: {accept_url}\n\n'
+                        'This is an invitation-only closed group.'
+                    ),
+                    from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', None),
+                    recipient_list=[invited_user.email],
+                    fail_silently=False,
+                )
+                email_sent = True
+            except Exception as exc:
+                messages.warning(
+                    request,
+                    f'Invitation notification was created, but email could not be sent: {exc}'
+                )
 
             create_notification(
                 recipient=invited_user,
@@ -355,7 +383,10 @@ def send_group_invitation(request, pk):
                 link=f'/research/groups/{group.pk}/'
             )
 
-            messages.success(request, f'Invitation sent to {invited_user.get_full_name()}.')
+            if email_sent:
+                messages.success(request, f'Invitation sent to {invited_user.get_full_name()} by real email and notification.')
+            else:
+                messages.success(request, f'Invitation notification sent to {invited_user.get_full_name()}. Email failed; check SMTP settings.')
             return redirect('research:group_detail', pk=pk)
 
     messages.error(request, 'Invalid invitation request.')
